@@ -17,31 +17,23 @@ PC 상에서 실행되는 AI 에이전트 기반 투자 지원 시스템입니�
 
 ## 구성 ("AI 직원")
 
-애널리스트팀은 자산군(암호화폐/국내주식/해외주식)별로 나뉘고, 각 자산군 안에서 다시 기술적분석/시장심리/뉴스·이슈/펀더멘털
-4가지 관점으로 분석을 나눠 맡습니다.
+애널리스트팀은 자산군(암호화폐/국내주식/해외주식)별로 나뉘고, 각 자산군 안에서 다시 기술적분석/펀더멘털/
+뉴스·심리 3가지 관점으로 분석을 나눠 맡습니다. 데스크별 리서치 종합 담당(Node/Anchor/Compass)이 강세·
+약세 논거를 스스로 세운 뒤 저울질해 리서치 노트로 정리합니다.
 
 | 팀 | 이름 | 역할 | 파일 |
 |---|---|---|---|
 | ANALYSTS(크립토) | Candle | 암호화폐 기술적 분석 | `.claude/agents/candle.md` |
-| ANALYSTS(크립토) | Vibes | 암호화폐 시장심리 | `.claude/agents/vibes.md` |
-| ANALYSTS(크립토) | Chain | 암호화폐 뉴스·이슈 | `.claude/agents/chain.md` |
 | ANALYSTS(크립토) | Proto | 암호화폐 펀더멘털 | `.claude/agents/proto.md` |
-| RESEARCH(크립토) | Ape | 크립토 강세 관점 | `.claude/agents/ape.md` |
-| RESEARCH(크립토) | Fud | 크립토 약세 관점 | `.claude/agents/fud.md` |
+| ANALYSTS(크립토) | Vibes | 암호화폐 뉴스·심리 | `.claude/agents/vibes.md` |
 | RESEARCH(크립토) | Node | 크립토 리서치 종합 | `.claude/agents/node.md` |
 | ANALYSTS(국내주식) | Chart | 국내주식 기술적 분석 | `.claude/agents/chart.md` |
-| ANALYSTS(국내주식) | Scoop | 국내주식 뉴스·이슈 | `.claude/agents/scoop.md` |
-| ANALYSTS(국내주식) | Mood | 국내주식 시장심리 | `.claude/agents/mood.md` |
 | ANALYSTS(국내주식) | Ledger | 국내주식 펀더멘털 | `.claude/agents/ledger.md` |
-| RESEARCH(국내주식) | Rally | 국내주식 강세 관점 | `.claude/agents/rally.md` |
-| RESEARCH(국내주식) | Slump | 국내주식 약세 관점 | `.claude/agents/slump.md` |
+| ANALYSTS(국내주식) | Mood | 국내주식 뉴스·심리 | `.claude/agents/mood.md` |
 | RESEARCH(국내주식) | Anchor | 국내주식 리서치 종합 | `.claude/agents/anchor.md` |
 | ANALYSTS(해외주식) | Trend | 해외주식 기술적 분석 | `.claude/agents/trend.md` |
-| ANALYSTS(해외주식) | Herald | 해외주식 뉴스·이슈 | `.claude/agents/herald.md` |
-| ANALYSTS(해외주식) | Pulse | 해외주식 시장심리 | `.claude/agents/pulse.md` |
 | ANALYSTS(해외주식) | Vault | 해외주식 펀더멘털 | `.claude/agents/vault.md` |
-| RESEARCH(해외주식) | Surge | 해외주식 강세 관점 | `.claude/agents/surge.md` |
-| RESEARCH(해외주식) | Drag | 해외주식 약세 관점 | `.claude/agents/drag.md` |
+| ANALYSTS(해외주식) | Pulse | 해외주식 뉴스·심리 | `.claude/agents/pulse.md` |
 | RESEARCH(해외주식) | Compass | 해외주식 리서치 종합 | `.claude/agents/compass.md` |
 | PM OFFICE | The Boss | 종합 리포트 작성 (포트폴리오 매니저) | `.claude/agents/chief-strategist.md` |
 
