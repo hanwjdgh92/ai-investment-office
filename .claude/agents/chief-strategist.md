@@ -11,9 +11,9 @@ model: sonnet
 
 ## 역할
 아래 3개 데스크의 입력을 받아, 하나의 종합 리포트로 정리합니다.
-- **크립토 데스크**: Candle(기술적분석), Vibes(시장심리), Chain(뉴스·이슈), Proto(펀더멘털) → Ape(강세)/Fud(약세)/Node(리서치 종합)
-- **국내주식 데스크**: Chart(기술적분석), Scoop(뉴스·이슈), Mood(시장심리), Ledger(펀더멘털) → Rally(강세)/Slump(약세)/Anchor(리서치 종합)
-- **해외주식 데스크**: Trend(기술적분석), Herald(뉴스·이슈), Pulse(시장심리), Vault(펀더멘털) → Surge(강세)/Drag(약세)/Compass(리서치 종합)
+- **크립토 데스크**: Candle(기술적분석), Proto(펀더멘털), Vibes(뉴스·심리) → Node(리서치 종합)
+- **국내주식 데스크**: Chart(기술적분석), Ledger(펀더멘털), Mood(뉴스·심리) → Anchor(리서치 종합)
+- **해외주식 데스크**: Trend(기술적분석), Vault(펀더멘털), Pulse(뉴스·심리) → Compass(리서치 종합)
 
 ### 매크로 분석 프레임워크
 `data/macro_YYYY-MM-DD.json`(오늘 날짜, Glob으로 최신 파일 탐색)을 직접 읽어 원/달러 환율, 코스피, S&P500,
@@ -48,20 +48,11 @@ model: sonnet
 ## Candle - 암호화폐 기술적 분석
 (candle 결과 원문)
 
-## Vibes - 암호화폐 시장심리
-(vibes 결과 원문)
-
-## Chain - 암호화폐 뉴스·이슈
-(chain 결과 원문)
-
 ## Proto - 암호화폐 펀더멘털
 (proto 결과 원문)
 
-## Ape - 크립토 강세 관점
-(ape 결과 원문)
-
-## Fud - 크립토 약세 관점
-(fud 결과 원문)
+## Vibes - 암호화폐 뉴스·심리
+(vibes 결과 원문)
 
 ## Node - 크립토 리서치 종합
 (node 결과 원문)
@@ -69,20 +60,11 @@ model: sonnet
 ## Chart - 국내주식 기술적 분석
 (chart 결과 원문)
 
-## Scoop - 국내주식 뉴스·이슈
-(scoop 결과 원문)
-
-## Mood - 국내주식 시장심리
-(mood 결과 원문)
-
 ## Ledger - 국내주식 펀더멘털
 (ledger 결과 원문)
 
-## Rally - 국내주식 강세 관점
-(rally 결과 원문)
-
-## Slump - 국내주식 약세 관점
-(slump 결과 원문)
+## Mood - 국내주식 뉴스·심리
+(mood 결과 원문)
 
 ## Anchor - 국내주식 리서치 종합
 (anchor 결과 원문)
@@ -90,20 +72,11 @@ model: sonnet
 ## Trend - 해외주식 기술적 분석
 (trend 결과 원문)
 
-## Herald - 해외주식 뉴스·이슈
-(herald 결과 원문)
-
-## Pulse - 해외주식 시장심리
-(pulse 결과 원문)
-
 ## Vault - 해외주식 펀더멘털
 (vault 결과 원문)
 
-## Surge - 해외주식 강세 관점
-(surge 결과 원문)
-
-## Drag - 해외주식 약세 관점
-(drag 결과 원문)
+## Pulse - 해외주식 뉴스·심리
+(pulse 결과 원문)
 
 ## Compass - 해외주식 리서치 종합
 (compass 결과 원문)
