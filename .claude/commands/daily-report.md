@@ -1,0 +1,31 @@
+---
+description: 암호화폐/국내주식/해외주식 데이터를 수집하고 애널리스트팀·리서치팀·PM(The Boss)이 분석한 오늘의 투자 리포트를 생성한 뒤, 시각적 AI 오피스를 열어 보여준다.
+---
+
+다음 순서로 오늘의 투자 리포트를 생성하세요.
+
+1. PowerShell로 아래 4개 스크립트를 순서대로 실행해 `data/` 폴더에 오늘 날짜의 원시 데이터(가격·기술적 지표·
+   펀더멘털·매크로 지표)를 생성합니다.
+   - `python scripts\fetch_crypto.py`
+   - `python scripts\fetch_stocks_kr.py`
+   - `python scripts\fetch_stocks_us.py`
+   - `python scripts\fetch_macro.py`
+   (python이 PATH에 없다면 `$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")` 를 먼저 실행)
+
+2. **애널리스트팀**: 아래 12개 서브에이전트를 호출해 오늘 데이터를 분석하게 합니다. 모두 서로 독립적이므로 병렬로 호출하세요.
+   - 크립토 데스크: `candle`, `vibes`, `chain`, `proto`
+   - 국내주식 데스크: `chart`, `scoop`, `mood`, `ledger`
+   - 해외주식 데스크: `trend`, `herald`, `pulse`, `vault`
+
+3. **리서치팀 (데스크별 독립 진행)**: 아래 3개 데스크 각각에서 강세/약세 담당을 병렬로 호출한 뒤, 그 데스크의 리서치 매니저에게 전달해 종합합니다. 세 데스크는 서로 완전히 독립적이므로 전체를 한꺼번에 병렬로 호출해도 됩니다.
+   - 크립토 데스크: `ape`(강세)·`fud`(약세) 병렬 호출 → 결과를 `node`에게 전달해 종합
+   - 국내주식 데스크: `rally`(강세)·`slump`(약세) 병렬 호출 → 결과를 `anchor`에게 전달해 종합
+   - 해외주식 데스크: `surge`(강세)·`drag`(약세) 병렬 호출 → 결과를 `compass`에게 전달해 종합
+
+4. **PM**: 2번의 12개 분석 결과와 3번의 데스크별 리서치 결과(ape/fud/node, rally/slump/anchor, surge/drag/compass 9개)를 `chief-strategist` 서브에이전트에게 전달해 최종 종합 리포트를 `reports/YYYY-MM-DD.md`로 작성하게 합니다.
+
+5. `python scripts\generate_office.py`를 실행해 최신 데이터/리포트를 반영한 `office\index.html`을 생성합니다.
+
+6. `Start-Process "office\index.html"`로 시각적 AI 오피스를 기본 브라우저에서 자동으로 엽니다.
+
+7. 완료되면 생성된 리포트 경로를 사용자에게 알리고, 리포트의 핵심 요약(오늘의 요약 섹션)을 대화창에 그대로 보여주세요.

@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>나의 AI 투자 오피스</title>
+<style>
+  :root {
+    --bg-top: #fdf3ff;
+    --bg-bottom: #eef4ff;
+    --panel-bg: #ffffffcc;
+    --text-main: #2c2c3a;
+    --text-sub: #6b6b80;
+    --border: #e6e3f5;
+    --accent: #7c6cf0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-top: #201c2e;
+      --bg-bottom: #16141f;
+      --panel-bg: #2a2638cc;
+      --text-main: #ecebf5;
+      --text-sub: #a5a2ba;
+      --border: #3a3650;
+      --accent: #a99bff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg-top: #201c2e;
+    --bg-bottom: #16141f;
+    --panel-bg: #2a2638cc;
+    --text-main: #ecebf5;
+    --text-sub: #a5a2ba;
+    --border: #3a3650;
+    --accent: #a99bff;
+  }
+  :root[data-theme="light"] {
+    --bg-top: #fdf3ff;
+    --bg-bottom: #eef4ff;
+    --panel-bg: #ffffffcc;
+    --text-main: #2c2c3a;
+    --text-sub: #6b6b80;
+    --border: #e6e3f5;
+    --accent: #7c6cf0;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+    color: var(--text-main);
+    background: linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+    padding: 24px;
+  }
+
+  .app { max-width: 1180px; margin: 0 auto; }
+
+  header.topbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 18px 24px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+  .brand { display: flex; flex-direction: column; gap: 4px; }
+  .brand h1 { margin: 0; font-size: 1.4rem; }
+  .brand .meta { font-size: 0.82rem; color: var(--text-sub); }
+
+  .run-now-btn {
+    border: none; border-radius: 999px; padding: 10px 18px; font-size: 0.85rem; font-weight: 600;
+    background: var(--accent); color: white; cursor: pointer;
+  }
+  .run-now-btn:disabled { opacity: 0.6; cursor: default; }
+
+  .layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+  /* ---- 오피스 타일맵 (부서 구역): 3개 자산군 부서(크립토/국내주식/해외주식) + PM/TRADING/RISK ----
+     모든 존은 같은 어두운 베이스를 공유하고, 부서마다 --zone-accent 색만 달라진다(상단 바/라벨/장식/은은한 글로우).
+     방마다 완전히 다른 색을 칠하는 대신 "같은 오피스, 다른 팻말"처럼 보이게 하는 게 목표. */
+  .office-map {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-areas:
+      "crypto krstock usstock"
+      "pm trading risk";
+    gap: 12px;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    padding: 12px;
+    background: #0a0912;
+    box-shadow: inset 0 0 60px rgba(0,0,0,0.5);
+  }
+  @media (max-width: 640px) {
+    .office-map { grid-template-columns: 1fr; grid-template-areas: "crypto" "krstock" "usstock" "pm" "trading" "risk"; }
+  }
+
+  .zone {
+    position: relative;
+    border-radius: 14px;
+    min-height: 160px;
+    padding: 38px 12px 12px;
+    background-color: #161a26;
+    background-image:
+      radial-gradient(circle at 88% -12%, var(--zone-accent) 0%, transparent 48%),
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 100% 100%, 22px 22px, 22px 22px;
+    background-blend-mode: normal, normal, normal;
+    border-top: 3px solid var(--zone-accent);
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.35), 0 6px 16px rgba(0,0,0,0.3);
+  }
+  .zone[data-team="크립토"]    { grid-area: crypto;   --zone-accent: #f2a33d; }
+  .zone[data-team="국내주식"]  { grid-area: krstock;  --zone-accent: #6fb3e8; }
+  .zone[data-team="해외주식"]  { grid-area: usstock;  --zone-accent: #4fd0a0; }
+  .zone[data-team="PM"]        { grid-area: pm;       --zone-accent: #f2d43d; }
+  .zone[data-team="TRADING"]   { grid-area: trading;  --zone-accent: #4fd07a; }
+  .zone[data-team="RISK MGMT"] { grid-area: risk;     --zone-accent: #e8564f; }
+
+  .zone-label {
+    position: absolute; top: 10px; left: 10px;
+    font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em;
+    color: #12121a; background: var(--zone-accent);
+    padding: 4px 12px; border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  }
+  .zone-decor {
+    position: absolute; top: 8px; right: 10px;
+    background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 4px 7px;
+  }
+  .decor-icon { width: 70px; height: 20px; display: block; }
+
+  /* 전원 잠금 상태인 존(TRADING/RISK MGMT)은 텅 빈 느낌이 나지 않게 대각선 패턴 + 워터마크를 깔아준다 */
+  .zone.all-locked {
+    background-image:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.035) 0 10px, transparent 10px 20px),
+      radial-gradient(circle at 88% -12%, var(--zone-accent) 0%, transparent 48%),
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: auto, 100% 100%, 22px 22px, 22px 22px;
+  }
+  .zone.all-locked::after {
+    content: '준비 중';
+    position: absolute; right: 14px; bottom: 10px;
+    font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.18);
+  }
+
+  .zone-floor { display: flex; flex-direction: column; gap: 10px; }
+  .subteam-label {
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6); margin-bottom: 6px; padding-top: 8px;
+    border-top: 1px dashed rgba(255,255,255,0.18);
+  }
+  .subteam:first-child .subteam-label { border-top: none; padding-top: 0; }
+  .subteam-floor { display: flex; flex-wrap: wrap; gap: 14px; align-content: flex-start; }
+
+  .desk-unit {
+    width: 76px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: pointer;
+    border-radius: 10px;
+    padding: 4px;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .desk-unit:not(.locked):hover { transform: translateY(-3px); background: rgba(255,255,255,0.06); }
+  .desk-unit.locked { cursor: default; filter: grayscale(1); opacity: 0.55; }
+
+  .sprite-wrap { position: relative; }
+  .pixel-person {
+    width: 34px; height: 51px;
+    animation: bob 2.4s ease-in-out infinite;
+  }
+  .desk-unit.locked .pixel-person { animation: none; }
+  .desk-unit.working .sprite-wrap { animation: walk 1.6s ease-in-out infinite; }
+  .lock-badge { position: absolute; top: -4px; right: -6px; font-size: 12px; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @keyframes walk { 0%, 100% { transform: translateX(-4px); } 50% { transform: translateX(4px); } }
+
+  .status-label { font-size: 0.62rem; color: #fff; opacity: 0.85; margin-top: 3px; white-space: nowrap; }
+
+  .nameplate {
+    font-size: 0.66rem; font-weight: 700; color: #fff; background: rgba(0,0,0,0.55);
+    padding: 2px 7px; border-radius: 999px; white-space: nowrap; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .desk-prop { width: 30px; height: 8px; background: #6b4a2f; border-radius: 2px; position: relative; margin-top: 2px; }
+  .desk-prop .desk-monitor {
+    position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    width: 10px; height: 6px; background: #1b1b22; border-radius: 1px;
+  }
+  .desk-status {
+    width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 3px;
+  }
+  .desk-status.done { background: #33c17c; }
+  .desk-status.pending { background: #b8b3c9; }
+  .desk-status.locked { background: #7a7a7a; }
+
+  aside.console {
+    border-radius: 20px; border: 1px solid var(--border); background: var(--panel-bg);
+    padding: 16px; max-height: 560px; overflow-y: auto; backdrop-filter: blur(6px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+  aside.console h2 { margin: 0 0 12px; font-size: 1rem; }
+  .feed-group { margin-bottom: 8px; }
+  .feed-group:last-child { margin-bottom: 0; }
+  .feed-group summary {
+    cursor: pointer; list-style: none; user-select: none;
+    font-size: 0.74rem; font-weight: 800; letter-spacing: 0.05em; color: var(--text-sub);
+    text-transform: uppercase; padding: 8px 4px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .feed-group summary::-webkit-details-marker { display: none; }
+  .feed-group summary::before { content: '▸'; font-size: 0.7rem; transition: transform 0.15s ease; }
+  .feed-group[open] summary::before { transform: rotate(90deg); }
+  .feed-group .feed-item { margin: 10px 0 0; }
+  .feed-item { border-left: 3px solid var(--accent); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; background: var(--bg-bottom); }
+  .feed-item .fhead { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; }
+  .feed-item .ftext { font-size: 0.86rem; white-space: pre-wrap; }
+
+  .empty-note { color: var(--text-sub); font-size: 0.85rem; }
+
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+    align-items: center; justify-content: center; padding: 20px; z-index: 10;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--panel-bg); border: 1px solid var(--border); border-radius: 18px;
+    max-width: 560px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 22px;
+    color: var(--text-main);
+  }
+  .modal h3 { margin-top: 0; }
+  .modal-body { font-size: 0.9rem; line-height: 1.6; }
+  .modal-body p { margin: 0 0 12px; }
+  .modal-body h4 { margin: 16px 0 6px; font-size: 0.86rem; color: var(--text-sub); }
+  .modal-body h4:first-child { margin-top: 0; }
+  .modal-body ul { margin: 0 0 12px; padding-left: 1.2em; }
+  .modal-body li { margin-bottom: 8px; }
+  .modal-body li:last-child { margin-bottom: 0; }
+  .modal-body strong { color: var(--accent); }
+  .modal .close-btn {
+    float: right; border: none; background: var(--bg-bottom); border-radius: 999px;
+    width: 28px; height: 28px; cursor: pointer; font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <h1 id="office-title">나의 AI 투자 오피스</h1>
+      <div class="meta" id="office-meta">불러오는 중...</div>
+    </div>
+    <button id="run-now-btn" class="run-now-btn">지금 분석 받기</button>
+  </header>
+
+  <div class="layout">
+    <main class="office-map" id="office-map"></main>
+    <aside class="console">
+      <h2>Report</h2>
+      <div id="feed"></div>
+    </aside>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <button class="close-btn" id="modal-close">✕</button>
+    <h3 id="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+  </div>
+</div>
+
+<script>
+  window.__OFFICE_DATA__ = {"title": "나의 AI 투자 오피스", "generatedAt": "2026-08-04 20:11", "employees": [{"id": "candle", "name": "Candle", "role": "암호화폐 기술적 분석", "emoji": "🕯️", "color": "#ffd9ec", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 89,324,000원(-1.72%), RSI14 27.85 과매도. ETH: 2,627,000원(-2.6%), RSI14 36.71 중립."}, {"id": "vibes", "name": "Vibes", "role": "암호화폐 시장심리", "emoji": "🌊", "color": "#ffe9d9", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "Coldcard 지갑 해킹(8,900만달러규모)으로 보안신뢰훼손, 공포탐욕지수 중립~공포(25~44), 코스피급락·미국채금리하락으로 위험회피, DXY는 보합."}, {"id": "chain", "name": "Chain", "role": "암호화폐 뉴스·이슈", "emoji": "⛓️", "color": "#fff0c2", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: Coldcard 시드결함 4차공격, 누적피해8,800만달러+, 비트코인ETF 순유출 지속보도. ETH: 7월 이더리움ETF 순매수3.65억달러(2025년10월이후 최대)로 자금유입우위, Arthur Hayes재매수, Glamsterdam하드포크 예정."}, {"id": "proto", "name": "Proto", "role": "암호화폐 펀더멘털", "emoji": "🧬", "color": "#e0f7e9", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 유통량95%+채굴완료, 기관ETF자산1,300~2,000억달러, 신규채굴대비2.8배속도 기관매수. ETH: 스테이킹비율32.5%사상최고, L2TVL380억달러, ETF누적유입110억달러+."}, {"id": "ape", "name": "Ape", "role": "크립토 강세 관점", "emoji": "🐵", "color": "#ffe1e1", "team": "크립토", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: RSI14 27.85 과매도(반등기대), 유통량95%+채굴완료, 기관ETF자산확대, 신규채굴대비2.8배속도 기관매수. ETH: ETF순매수3.65억달러(최대), 스테이킹비율32.5%사상최고, L2TVL380억달러."}, {"id": "fud", "name": "Fud", "role": "크립토 약세 관점", "emoji": "❄️", "color": "#e1e6ff", "team": "크립토", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: -1.72%하락, Coldcard익스플로잇(누적8,800만달러+)으로 보안신뢰훼손, 파생상품 미결제약정급증, 공포탐욕지수 중립~공포, 비트코인ETF순유출지속. ETH: -2.6%하락, 연간순발행률 자료편차로 불확실성."}, {"id": "node", "name": "Node", "role": "크립토 리서치 종합", "emoji": "🧑‍🔬", "color": "#eae1ff", "team": "크립토", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: RSI과매도로 기술적반등여지 있으나 Coldcard보안이슈로 단기심리 취약, 장기수급구조(기관ETF·트레저리)는 견고. ETH: ETF자금유입·스테이킹비율 등 온체인지표 개선세이나 가격은 하락, 순발행률 불확실성 존재."}, {"id": "chart", "name": "Chart", "role": "국내주식 기술적 분석", "emoji": "📈", "color": "#d9f2ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: 239,500원(-8.76%), 5일선상회·20일60일선하회, RSI14 46.84중립. SK하이닉스: 1,567,000원(-8.79%), 5일선상회·20일60일선하회, RSI14 42.98중립. 둘다 직전거래일 급등후 급락."}, {"id": "scoop", "name": "Scoop", "role": "국내주식 뉴스·이슈", "emoji": "📰", "color": "#d9ffe4", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자·SK하이닉스 전일급등 차익실현으로 8%대급락. 반도체업황·AI투자지속성우려, 엔캐리청산우려, 중국CXMT경쟁우려, HBM경쟁이슈."}, {"id": "mood", "name": "Mood", "role": "국내주식 시장심리", "emoji": "🌙", "color": "#f0e0ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "코스피-5.12%급락, 외국인·기관순매도(합산약4.7조원) vs 개인2.5조원순매수. 반도체4종목이 코스피시총 약60%차지하는 쏠림구조. 코스닥+5%대반등."}, {"id": "ledger", "name": "Ledger", "role": "국내주식 펀더멘털", "emoji": "📒", "color": "#cfe8ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: PER19.36/PBR3.33, 2분기영업이익89.5조원역대최대(+56%). SK하이닉스: PER15.14/PBR6.76, 2분기영업이익60.5조원역대최대(+557%,영업이익률76%) 단 컨센서스하회."}, {"id": "rally", "name": "Rally", "role": "국내주식 강세 관점", "emoji": "🐂", "color": "#ffe1e1", "team": "국내주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자·SK하이닉스 급락에도 5일선상회, RSI중립권(과매도아님). 둘다 2분기 역대최대 영업이익. 개인2.5조원순매수, 코스닥+5%반등."}, {"id": "slump", "name": "Slump", "role": "국내주식 약세 관점", "emoji": "🐻", "color": "#e1e6ff", "team": "국내주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자·SK하이닉스 -8%대급락, MA20·MA60동반하회. 반도체업황우려, 엔캐리청산우려, 중국경쟁심화. SK하이닉스PBR6.76배 밸류부담, 컨센서스하회. 코스피 외국인·기관순매도, 반도체쏠림구조 취약."}, {"id": "anchor", "name": "Anchor", "role": "국내주식 리서치 종합", "emoji": "⚓", "color": "#eae1ff", "team": "국내주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: 실적펀더멘털 견조하나 업황·경쟁리스크가 급락 원인, 밸류에이션재평가압력 지속가능. SK하이닉스: 압도적 실적에도 컨센서스하회·PBR부담으로 하락폭 확대, 시장눈높이가 높아진 국면. 코스피전반: 외국인·기관매도를 개인이 일부받아냄, 반도체쏠림구조 변동성노출, 다만 미국환경우호적·코스닥반등으로 추세전환보다 단기조정 가능성."}, {"id": "trend", "name": "Trend", "role": "해외주식 기술적 분석", "emoji": "📊", "color": "#ffe0d0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 308.91달러(-7.35%), MA5·MA20이탈, RSI14 45.08중립. NVDA: 200.75달러(+2.93%), RSI14 47.75중립, 저점반등흐름."}, {"id": "herald", "name": "Herald", "role": "해외주식 뉴스·이슈", "emoji": "📯", "color": "#e0ffe0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 매출·EPS컨센서스상회했으나 가이던스둔화로 급락. NVDA: 하이퍼스케일러capex가이던스견조로 AI수요기대회복, 알리바바수출규제우회이슈(확인필요)."}, {"id": "pulse", "name": "Pulse", "role": "해외주식 시장심리", "emoji": "💓", "color": "#ffd0e0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "FOMC금리동결+피벗기대, S&P500기업85%실적상회(순이익성장률47%), 골드만삭스리스크어피타이트99백분위과열경고, \"8~9월최악의시기\"계절적약세경고."}, {"id": "vault", "name": "Vault", "role": "해외주식 펀더멘털", "emoji": "🏦", "color": "#d0e0ff", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: PER35.5/PBR42.0, 시총4.54조달러, 실적서프라이즈. NVDA: PER30.8/PBR24.9, 시총4.86조달러, 52주고저중간구간."}, {"id": "surge", "name": "Surge", "role": "해외주식 강세 관점", "emoji": "🚀", "color": "#ffe1e1", "team": "해외주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL 어닝서프라이즈. NVDA +2.93%저점반등, 하이퍼스케일러capex견조. 시장전반 FOMC금리동결+피벗기대, S&P500실적호조."}, {"id": "drag", "name": "Drag", "role": "해외주식 약세 관점", "emoji": "🪂", "color": "#e1e6ff", "team": "해외주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL -7.35% MA5·MA20이탈, 가이던스하회, 고밸류에이션(PER35.5)에 금리부담. NVDA MA20·MA60여전히하회, 수출규제이슈. 시장전반 리스크어피타이트과열경고, 계절적약세경고."}, {"id": "compass", "name": "Compass", "role": "해외주식 리서치 종합", "emoji": "🧭", "color": "#eae1ff", "team": "해외주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 어닝서프라이즈에도 가이던스하회·고밸류에이션·금리환경으로 급락, 실적의 질이 헤드라인보다 중요해진 국면. NVDA: 기술적반등이나 중기추세미확인, 방향성확인전까지 중립. 시장전반: 유동성환경우호적이나 밸류에이션·계절성측면 경계필요."}, {"id": "trigger", "name": "Trigger", "role": "매매 시그널 생성 (Execution Specialist)", "emoji": "🎯", "color": "#dcdcdc", "team": "TRADING", "status": "locked", "statusText": "분석과 논쟁을 진입가·목표가·손절가·포지션 크기로 숫자화하는 성격. 2단계(매매 시그널 생성)에서 합류 예정", "fullText": "분석과 논쟁을 진입가·목표가·손절가·포지션 크기로 숫자화하는 성격. 2단계(매매 시그널 생성)에서 합류 예정", "placeholder": true}, {"id": "maverick", "name": "Maverick", "role": "공격적 리스크 검토 (Aggressive Risk)", "emoji": "🦉", "color": "#e6e0d4", "team": "RISK MGMT", "status": "locked", "statusText": "\"왜 이렇게 소심해? 더 크게 먹을 수 있는데\" — 놓친 상승 기회도 리스크라고 주장하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "fullText": "\"왜 이렇게 소심해? 더 크게 먹을 수 있는데\" — 놓친 상승 기회도 리스크라고 주장하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "placeholder": true}, {"id": "guardian", "name": "Guardian", "role": "보수적 리스크 검토 (Conservative Risk)", "emoji": "🛡️", "color": "#e6e0d4", "team": "RISK MGMT", "status": "locked", "statusText": "\"그러다 다 잃는다\" — 뭐든 최악의 시나리오부터 확인하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "fullText": "\"그러다 다 잃는다\" — 뭐든 최악의 시나리오부터 확인하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "placeholder": true}, {"id": "balance", "name": "Balance", "role": "중립 리스크 검토 (Neutral Risk)", "emoji": "⚖️", "color": "#e6e0d4", "team": "RISK MGMT", "status": "locked", "statusText": "Maverick과 Guardian을 저울질해 현실적인 중간 지점을 찾는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "fullText": "Maverick과 Guardian을 저울질해 현실적인 중간 지점을 찾는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "placeholder": true}, {"id": "chief-strategist", "name": "The Boss", "role": "종합 리포트 작성 (포트폴리오 매니저)", "emoji": "🧑‍💼", "color": "#e8e0ff", "team": "PM", "subteam": null, "status": "done", "statusText": "리포트 작성 완료", "fullText": "코스피는 -5.12%(6,257.45) 급락하며 삼성전자(-8.76%)·SK하이닉스(-8.79%)가 전일 급등분을 대거 반납했고, 외국인·기관 순매도(합산 약 4.7조원)를 개인 2.5조원 순매수가 일부 받아내는 모습이었습니다. 원/달러 환율은 1,427.13원(+0.46%)으로 상승했으나 미 10년물 금리(4.673%, -1.52%)는 하락하고 달러인덱스(99.781, -0.02%)는 보합에 머물러, 국내 반도체 대형주 쏠림에 따른 국지적 위험회피가 두드러진 하루였습니다. 해외증시는 7/31 기준 S&P500이 +0.7%로 견조했지만 AAPL은 가이던스 둔화로 -7.35% 급락했고 NVDA는 하이퍼스케일러 capex 기대에 +2.93% 반등하는 등 종목별 온도차가 컸습니다. 암호화폐는 Coldcard 지갑 익스플로잇 사태(누적 피해 8,800만~8,900만달러)로 보안 신뢰가 훼손되며 BTC(-1.72%, RSI 과매도)·ETH(-2.6%) 모두 약세였으나, ETH는 ETF 순매수·스테이킹비율 등 중장기 자금유입 지표가 개선세를 보였습니다. 전반적으로 국내 반도체발 위험회피, 애플 개별주 조정, 크립토 보안이슈발 신뢰훼손이 겹쳤으나 미 금리 하락·달러 보합 등 매크로 환경 자체는 자산군별로 엇갈린 신호를 보였습니다.\n\n- Node(크립토): BTC RSI 과매도로 기술적 반등 여지는 있으나 Coldcard 지갑 익스플로잇(누적 8,800만달러+)이 콜드스토리지 신뢰를 훼손해 단기 심리가 취약한 상태.\n- Node(크립토): ETH는 ETF 순매수·스테이킹비율 등 온체인 지표가 개선세이나 가격은 오히려 하락, 순발행률 수치의 자료 편차로 인한 불확실성도 존재.\n- Anchor(국내주식): 반도체 4종목이 코스피 시총의 약 60%를 차지하는 쏠림 구조상, 삼성전자·SK하이닉스 동반 급락이 지수 전체 변동성을 키우는 취약점.\n- Anchor(국내주식): SK하이닉스는 역대최대 영업이익에도 컨센서스 하회와 PBR 6.76배의 밸류에이션 부담이 겹쳐 하락폭이 확대된 점에 유의.\n- Compass(해외주식): AAPL은 어닝서프라이즈에도 가이던스 하회·고밸류에이션(PER 35.5)·금리 부담이 겹쳐 급락, NVDA는 중기 추세가 아직 미확인 상태.\n- Compass(해외주식): 골드만삭스 리스크어피타이트 지표 과열경고와 \"8~9월 최악의 시기\" 계절적 약세 경고가 시장 전반의 밸류에이션·변동성 리스크로 상존.\n\n- Node(크립토): BTC 과매도 반등 신호와 Coldcard 보안이슈발 신뢰훼손 중 어느 쪽이 우세할지, 장·단기 시계열에 따라 신호가 엇갈리는 점을 계속 지켜볼 필요.\n- Anchor(국내주식): 삼성전자·SK하이닉스 급락이 전일 급등에 대한 단기 차익실현인지 반도체 밸류에이션 재평가의 시작인지는, 개인·외국인·기관 수급과 코스닥 순환매 여부를 함께 살펴볼 참고 지점.\n- Compass(해외주식): 애플은 실적 자체보다 가이던스·업황 코멘트가 주가에 더 크게 반영된 점이, 엔비디아는 하이퍼스케일러 capex 확대와 수출규제 우회 이슈가 동반되는 점이 관찰 포인트.\n- Compass(해외주식): 시장 전반의 유동성 환경(FOMC 금리동결, 피벗 기대)은 우호적이나 밸류에이션·계절성 측면의 경계감이 공존하는 혼재국면이라는 점."}], "consoleFeed": [{"category": "크립토", "items": [{"team": "크립토", "name": "Candle", "emoji": "🕯️", "time": "22:18", "text": "BTC: 89,324,000원(-1.72%), RSI14 27.85 과매도. ETH: 2,627,000원(-2.6%), RSI14 36.71 중립."}, {"team": "크립토", "name": "Vibes", "emoji": "🌊", "time": "22:18", "text": "Coldcard 지갑 해킹(8,900만달러규모)으로 보안신뢰훼손, 공포탐욕지수 중립~공포(25~44), 코스피급락·미국채금리하락으로 위험회피, DXY는 보합."}, {"team": "크립토", "name": "Chain", "emoji": "⛓️", "time": "22:18", "text": "BTC: Coldcard 시드결함 4차공격, 누적피해8,800만달러+, 비트코인ETF 순유출 지속보도. ETH: 7월 이더리움ETF 순매수3.65억달러(2025년10월이후 최대)로 자금유입우위, Arthur Hayes재매수, Glamsterdam하드포크 예정."}, {"team": "크립토", "name": "Proto", "emoji": "🧬", "time": "22:18", "text": "BTC: 유통량95%+채굴완료, 기관ETF자산1,300~2,000억달러, 신규채굴대비2.8배속도 기관매수. ETH: 스테이킹비율32.5%사상최고, L2TVL380억달러, ETF누적유입110억달러+."}, {"team": "크립토", "name": "Ape", "emoji": "🐵", "time": "22:18", "text": "BTC: RSI14 27.85 과매도(반등기대), 유통량95%+채굴완료, 기관ETF자산확대, 신규채굴대비2.8배속도 기관매수. ETH: ETF순매수3.65억달러(최대), 스테이킹비율32.5%사상최고, L2TVL380억달러."}, {"team": "크립토", "name": "Fud", "emoji": "❄️", "time": "22:18", "text": "BTC: -1.72%하락, Coldcard익스플로잇(누적8,800만달러+)으로 보안신뢰훼손, 파생상품 미결제약정급증, 공포탐욕지수 중립~공포, 비트코인ETF순유출지속. ETH: -2.6%하락, 연간순발행률 자료편차로 불확실성."}, {"team": "크립토", "name": "Node", "emoji": "🧑‍🔬", "time": "22:18", "text": "BTC: RSI과매도로 기술적반등여지 있으나 Coldcard보안이슈로 단기심리 취약, 장기수급구조(기관ETF·트레저리)는 견고. ETH: ETF자금유입·스테이킹비율 등 온체인지표 개선세이나 가격은 하락, 순발행률 불확실성 존재."}]}, {"category": "국내주식", "items": [{"team": "국내주식", "name": "Chart", "emoji": "📈", "time": "22:18", "text": "삼성전자: 239,500원(-8.76%), 5일선상회·20일60일선하회, RSI14 46.84중립. SK하이닉스: 1,567,000원(-8.79%), 5일선상회·20일60일선하회, RSI14 42.98중립. 둘다 직전거래일 급등후 급락."}, {"team": "국내주식", "name": "Scoop", "emoji": "📰", "time": "22:18", "text": "삼성전자·SK하이닉스 전일급등 차익실현으로 8%대급락. 반도체업황·AI투자지속성우려, 엔캐리청산우려, 중국CXMT경쟁우려, HBM경쟁이슈."}, {"team": "국내주식", "name": "Mood", "emoji": "🌙", "time": "22:18", "text": "코스피-5.12%급락, 외국인·기관순매도(합산약4.7조원) vs 개인2.5조원순매수. 반도체4종목이 코스피시총 약60%차지하는 쏠림구조. 코스닥+5%대반등."}, {"team": "국내주식", "name": "Ledger", "emoji": "📒", "time": "22:18", "text": "삼성전자: PER19.36/PBR3.33, 2분기영업이익89.5조원역대최대(+56%). SK하이닉스: PER15.14/PBR6.76, 2분기영업이익60.5조원역대최대(+557%,영업이익률76%) 단 컨센서스하회."}, {"team": "국내주식", "name": "Rally", "emoji": "🐂", "time": "22:18", "text": "삼성전자·SK하이닉스 급락에도 5일선상회, RSI중립권(과매도아님). 둘다 2분기 역대최대 영업이익. 개인2.5조원순매수, 코스닥+5%반등."}, {"team": "국내주식", "name": "Slump", "emoji": "🐻", "time": "22:18", "text": "삼성전자·SK하이닉스 -8%대급락, MA20·MA60동반하회. 반도체업황우려, 엔캐리청산우려, 중국경쟁심화. SK하이닉스PBR6.76배 밸류부담, 컨센서스하회. 코스피 외국인·기관순매도, 반도체쏠림구조 취약."}, {"team": "국내주식", "name": "Anchor", "emoji": "⚓", "time": "22:18", "text": "삼성전자: 실적펀더멘털 견조하나 업황·경쟁리스크가 급락 원인, 밸류에이션재평가압력 지속가능. SK하이닉스: 압도적 실적에도 컨센서스하회·PBR부담으로 하락폭 확대, 시장눈높이가 높아진 국면. 코스피전반: 외국인·기관매도를 개인이 일부받아냄, 반도체쏠림구조 변동성노출, 다만 미국환경우호적·코스닥반등으로 추세전환보다 단기조정 가능성."}]}, {"category": "해외주식", "items": [{"team": "해외주식", "name": "Trend", "emoji": "📊", "time": "22:18", "text": "AAPL: 308.91달러(-7.35%), MA5·MA20이탈, RSI14 45.08중립. NVDA: 200.75달러(+2.93%), RSI14 47.75중립, 저점반등흐름."}, {"team": "해외주식", "name": "Herald", "emoji": "📯", "time": "22:18", "text": "AAPL: 매출·EPS컨센서스상회했으나 가이던스둔화로 급락. NVDA: 하이퍼스케일러capex가이던스견조로 AI수요기대회복, 알리바바수출규제우회이슈(확인필요)."}, {"team": "해외주식", "name": "Pulse", "emoji": "💓", "time": "22:18", "text": "FOMC금리동결+피벗기대, S&P500기업85%실적상회(순이익성장률47%), 골드만삭스리스크어피타이트99백분위과열경고, \"8~9월최악의시기\"계절적약세경고."}, {"team": "해외주식", "name": "Vault", "emoji": "🏦", "time": "22:18", "text": "AAPL: PER35.5/PBR42.0, 시총4.54조달러, 실적서프라이즈. NVDA: PER30.8/PBR24.9, 시총4.86조달러, 52주고저중간구간."}, {"team": "해외주식", "name": "Surge", "emoji": "🚀", "time": "22:18", "text": "AAPL 어닝서프라이즈. NVDA +2.93%저점반등, 하이퍼스케일러capex견조. 시장전반 FOMC금리동결+피벗기대, S&P500실적호조."}, {"team": "해외주식", "name": "Drag", "emoji": "🪂", "time": "22:18", "text": "AAPL -7.35% MA5·MA20이탈, 가이던스하회, 고밸류에이션(PER35.5)에 금리부담. NVDA MA20·MA60여전히하회, 수출규제이슈. 시장전반 리스크어피타이트과열경고, 계절적약세경고."}, {"team": "해외주식", "name": "Compass", "emoji": "🧭", "time": "22:18", "text": "AAPL: 어닝서프라이즈에도 가이던스하회·고밸류에이션·금리환경으로 급락, 실적의 질이 헤드라인보다 중요해진 국면. NVDA: 기술적반등이나 중기추세미확인, 방향성확인전까지 중립. 시장전반: 유동성환경우호적이나 밸류에이션·계절성측면 경계필요."}]}, {"category": "PM", "items": [{"team": "PM", "name": "The Boss", "emoji": "🧑‍💼", "time": "22:18", "text": "코스피는 -5.12%(6,257.45) 급락하며 삼성전자(-8.76%)·SK하이닉스(-8.79%)가 전일 급등분을 대거 반납했고, 외국인·기관 순매도(합산 약 4.7조원)를 개인 2.5조원 순매수가 일부 받아내는 모습이었습니다. 원/달러 환율은 1,427.13원(+0.46%)으로 상승했으나 미 10년물 금리(4.673%, -1.52%)는 하락하고 달러인덱스(99.781, -0.02%)는 보합…"}]}]};
+
+  const mapEl = document.getElementById('office-map');
+  const feedEl = document.getElementById('feed');
+  const TEAM_ORDER = ['크립토', '국내주식', '해외주식', 'PM', 'TRADING', 'RISK MGMT'];
+  const TEAM_LABELS = {
+    '크립토': '크립토 데스크', '국내주식': '국내주식 데스크', '해외주식': '해외주식 데스크',
+    'PM': 'PM OFFICE', 'TRADING': 'TRADING', 'RISK MGMT': 'RISK MGMT',
+  };
+  // 팀마다 하는 일이 한눈에 보이도록 존 상단에 붙이는 장식 아이콘(캔들차트/추세선/지구본+막대/책장/시계+티커/경고게이지).
+  const TEAM_DECOR = {
+    '크립토': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <rect x="2" y="4" width="2" height="12" fill="#e0574f"/><rect x="1" y="7" width="4" height="6" fill="#e0574f"/>
+      <rect x="12" y="2" width="2" height="16" fill="#4fd07a"/><rect x="11" y="6" width="4" height="8" fill="#4fd07a"/>
+      <rect x="22" y="6" width="2" height="10" fill="#e0574f"/><rect x="21" y="9" width="4" height="5" fill="#e0574f"/>
+      <rect x="32" y="1" width="2" height="18" fill="#4fd07a"/><rect x="31" y="4" width="4" height="10" fill="#4fd07a"/>
+      <rect x="42" y="5" width="2" height="11" fill="#4fd07a"/><rect x="41" y="8" width="4" height="6" fill="#4fd07a"/>
+    </svg>`,
+    '국내주식': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <polyline points="2,18 14,11 26,14 38,5 50,8" fill="none" stroke="#6fb3e8" stroke-width="2"/>
+      <rect x="48" y="0" width="5" height="5" fill="#6fb3e8"/>
+    </svg>`,
+    '해외주식': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <rect x="2" y="10" width="6" height="8" fill="#4fd0a0"/><rect x="11" y="4" width="6" height="14" fill="#4fd0a0"/>
+      <rect x="20" y="8" width="6" height="10" fill="#4fd0a0"/>
+      <circle cx="45" cy="10" r="8" fill="none" stroke="#4fd0a0" stroke-width="2"/>
+      <line x1="37" y1="10" x2="53" y2="10" stroke="#4fd0a0" stroke-width="1"/>
+    </svg>`,
+    'PM': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <rect x="1" y="1" width="58" height="18" fill="none" stroke="#f2d43d" stroke-width="1.5"/>
+      <rect x="6" y="4" width="4" height="12" fill="#e0574f"/><rect x="12" y="4" width="4" height="12" fill="#4fd07a"/>
+      <rect x="18" y="4" width="4" height="12" fill="#6fb3e8"/><rect x="24" y="4" width="4" height="12" fill="#f2a33d"/>
+      <rect x="30" y="4" width="4" height="12" fill="#a99bff"/><rect x="36" y="4" width="4" height="12" fill="#4fd0a0"/>
+    </svg>`,
+    'TRADING': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <circle cx="10" cy="10" r="8" fill="none" stroke="#4fd07a" stroke-width="2"/>
+      <line x1="10" y1="10" x2="10" y2="5" stroke="#4fd07a" stroke-width="2"/>
+      <line x1="10" y1="10" x2="14" y2="10" stroke="#4fd07a" stroke-width="2"/>
+      <rect x="24" y="5" width="34" height="10" fill="#0c1a10" stroke="#4fd07a"/>
+      <rect x="27" y="8" width="4" height="4" fill="#4fd07a"/><rect x="34" y="8" width="4" height="4" fill="#e0574f"/>
+      <rect x="41" y="8" width="4" height="4" fill="#4fd07a"/><rect x="48" y="8" width="4" height="4" fill="#e0574f"/>
+    </svg>`,
+    'RISK MGMT': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <rect x="2" y="12" width="6" height="6" fill="#e8564f"/><rect x="11" y="8" width="6" height="10" fill="#e8564f"/>
+      <rect x="20" y="4" width="6" height="14" fill="#e8564f"/>
+      <path d="M38 17 L45 3 L52 17 Z" fill="none" stroke="#e8564f" stroke-width="2"/>
+      <rect x="43.5" y="9" width="3" height="4" fill="#e8564f"/><rect x="43.5" y="14" width="3" height="2" fill="#e8564f"/>
+    </svg>`,
+  };
+
+  // 8x12 픽셀 그리드로 그린 단순 사람 스프라이트. 셔츠 색은 직원 색상, 머리색은 id로 고정 배정해 다양성을 줌.
+  const HAIR_COLORS = ['#2b1d14', '#5b3a29', '#1a1a1a', '#8a5a2b', '#d9c9a3', '#c26b3f'];
+  function hairColorFor(id) {
+    let sum = 0;
+    for (let i = 0; i < id.length; i++) sum += id.charCodeAt(i);
+    return HAIR_COLORS[sum % HAIR_COLORS.length];
+  }
+  function pixelPersonSvg(shirtColor, hairColor) {
+    return `
+      <svg class="pixel-person" viewBox="0 0 8 12" shape-rendering="crispEdges">
+        <rect x="1" y="4" width="6" height="5" fill="${shirtColor}"/>
+        <rect x="2" y="9" width="2" height="3" fill="#33384a"/>
+        <rect x="4" y="9" width="2" height="3" fill="#33384a"/>
+        <rect x="1" y="11" width="6" height="1" fill="#2b2b33"/>
+        <rect x="2" y="2" width="4" height="2" fill="#f0c9a0"/>
+        <rect x="1" y="0" width="6" height="2" fill="${hairColor}"/>
+      </svg>
+    `;
+  }
+
+  const SUBTEAM_ORDER = ['ANALYSTS', 'RESEARCH'];
+  const SUBTEAM_LABELS = { ANALYSTS: '애널리스트', RESEARCH: '리서치' };
+
+  function buildDeskUnit(emp) {
+    const unit = document.createElement('div');
+    const statusClass = emp.placeholder ? 'locked' : (emp.status === 'done' ? 'done' : 'pending');
+    unit.className = 'desk-unit' + (emp.placeholder ? ' locked' : (statusClass === 'pending' ? ' working' : ''));
+    const statusLabel = emp.placeholder ? '🔒 대기' : (statusClass === 'done' ? '✅ 완료' : '⏳ 분석 중');
+    unit.innerHTML = `
+      <div class="sprite-wrap">
+        ${pixelPersonSvg(emp.color, hairColorFor(emp.id))}
+        ${emp.placeholder ? '<span class="lock-badge">🔒</span>' : ''}
+      </div>
+      <div class="nameplate"><span class="desk-status ${statusClass}"></span>${emp.name}</div>
+      <div class="desk-prop"><div class="desk-monitor"></div></div>
+      <div class="status-label">${statusLabel}</div>
+    `;
+    unit.title = emp.placeholder ? emp.statusText : `${emp.role} · ${emp.statusText}`;
+    unit.addEventListener('click', () => openModal(emp));
+    return unit;
+  }
+
+  // 원문(마크다운 비슷한 텍스트: "- **BTC**: ..." 글머리, "### " 헤더)을 문단/리스트로 나눠서 보여준다.
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function formatAnalysisText(text) {
+    const lines = (text || '').split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return '<p>아직 작성된 분석이 없습니다.</p>';
+    let html = '';
+    let inList = false;
+    const closeList = () => { if (inList) { html += '</ul>'; inList = false; } };
+    const render = s => escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    lines.forEach(line => {
+      const isBullet = /^[-*]\s+/.test(line);
+      const isHeading = /^#{1,4}\s+/.test(line);
+      const content = line.replace(/^[-*]\s+/, '').replace(/^#{1,4}\s+/, '');
+      if (isHeading) {
+        closeList();
+        html += `<h4>${render(content)}</h4>`;
+        return;
+      }
+      // 줄바꿈 없이 "종목: ... . 종목: ... ." 식으로 이어진 원문은 문장 단위로 쪼개 리스트로 보여준다.
+      const sentences = content.split(/(?<=[.!?])\s+(?=\S)/).filter(Boolean);
+      if (isBullet || sentences.length > 1) {
+        if (!inList) { html += '<ul>'; inList = true; }
+        sentences.forEach(s => { html += `<li>${render(s)}</li>`; });
+      } else {
+        closeList();
+        html += `<p>${render(content)}</p>`;
+      }
+    });
+    closeList();
+    return html;
+  }
+
+  const backdrop = document.getElementById('modal-backdrop');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  function openModal(emp) {
+    modalTitle.textContent = `${emp.emoji} ${emp.name} — 오늘의 분석`;
+    modalBody.innerHTML = formatAnalysisText(emp.fullText);
+    backdrop.classList.add('open');
+  }
+  document.getElementById('modal-close').addEventListener('click', () => backdrop.classList.remove('open'));
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.classList.remove('open'); });
+
+  function renderOffice(data) {
+    document.getElementById('office-title').textContent = data.title;
+    const activeCount = data.employees.filter(e => !e.placeholder).length;
+    document.getElementById('office-meta').textContent =
+      `AI STAFF ${activeCount}명(+대기 ${data.employees.length - activeCount}) · 마지막 업데이트 ${data.generatedAt}`;
+
+    const byTeam = {};
+    data.employees.forEach(emp => {
+      (byTeam[emp.team] = byTeam[emp.team] || []).push(emp);
+    });
+
+    mapEl.innerHTML = '';
+    TEAM_ORDER.forEach(team => {
+      const members = byTeam[team];
+      if (!members) return;
+      const zone = document.createElement('section');
+      zone.className = 'zone' + (members.every(m => m.placeholder) ? ' all-locked' : '');
+      zone.dataset.team = team;
+      zone.innerHTML = `
+        <div class="zone-label">${TEAM_LABELS[team] || team}</div>
+        <div class="zone-decor">${TEAM_DECOR[team] || ''}</div>
+        <div class="zone-floor"></div>
+      `;
+      const floor = zone.querySelector('.zone-floor');
+
+      const bySubteam = {};
+      members.forEach(emp => {
+        const key = emp.subteam || '';
+        (bySubteam[key] = bySubteam[key] || []).push(emp);
+      });
+      const subteamKeys = SUBTEAM_ORDER.filter(k => bySubteam[k]);
+
+      if (subteamKeys.length === 0) {
+        // 부서 내 애널리스트/리서치 구분이 없는 존(PM, TRADING, RISK MGMT)은 그냥 한 층에 배치
+        members.forEach(emp => floor.appendChild(buildDeskUnit(emp)));
+      } else {
+        subteamKeys.forEach(key => {
+          const sub = document.createElement('div');
+          sub.className = 'subteam';
+          sub.innerHTML = `<div class="subteam-label">${SUBTEAM_LABELS[key] || key}</div><div class="subteam-floor"></div>`;
+          const subFloor = sub.querySelector('.subteam-floor');
+          bySubteam[key].forEach(emp => subFloor.appendChild(buildDeskUnit(emp)));
+          floor.appendChild(sub);
+        });
+      }
+
+      mapEl.appendChild(zone);
+    });
+
+    if (data.consoleFeed.length === 0) {
+      feedEl.innerHTML = '<div class="empty-note">아직 콘솔에 올라온 내용이 없습니다. /daily-report를 실행해보세요.</div>';
+    } else {
+      feedEl.innerHTML = '';
+      data.consoleFeed.forEach((group, idx) => {
+        const details = document.createElement('details');
+        details.className = 'feed-group';
+        if (idx === 0) details.open = true; // 첫 카테고리만 기본으로 펼침
+        const summary = document.createElement('summary');
+        summary.textContent = `${group.category} (${group.items.length})`;
+        details.appendChild(summary);
+        group.items.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'feed-item';
+          div.innerHTML = `
+            <div class="fhead"><span>${item.emoji} ${item.name}</span><span>${item.time}</span></div>
+            <div class="ftext">${item.text}</div>
+          `;
+          details.appendChild(div);
+        });
+        feedEl.appendChild(details);
+      });
+    }
+  }
+
+  renderOffice(window.__OFFICE_DATA__);
+
+  // 로컬 서버(scripts/serve_office.py)로 서빙 중일 때만 /api/live가 응답한다.
+  // file://로 직접 열었을 때는 fetch가 실패하므로 조용히 무시하고 스냅샷만 보여준다.
+  const runBtn = document.getElementById('run-now-btn');
+  const RUN_BTN_DEFAULT = runBtn.textContent;
+  let wasRunning = false;
+
+  const LIVE_POLL_MS = 30000;
+  function pollLive() {
+    fetch('/api/live', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!data) return;
+        renderOffice(data);
+        // 버튼 상태는 실제 분석 프로세스 실행 여부로 결정 (타이머로 눈감고 리셋하지 않음)
+        runBtn.disabled = data.analysisRunning;
+        if (data.analysisRunning) {
+          runBtn.textContent = '분석 중... (완료되면 자동 반영)';
+        } else if (data.analysisFailed) {
+          runBtn.textContent = '분석 실패 - logs 폴더 확인 (다시 시도하려면 클릭)';
+        } else {
+          runBtn.textContent = RUN_BTN_DEFAULT;
+        }
+        // 분석이 막 끝난 시점(실행중 → 완료)이면 종합 리포트를 팝업으로 띄운다 (성공했을 때만)
+        if (wasRunning && !data.analysisRunning && !data.analysisFailed) {
+          const chief = data.employees.find(e => e.id === 'chief-strategist');
+          if (chief) openModal(chief);
+        }
+        wasRunning = data.analysisRunning;
+      })
+      .catch(() => {});
+  }
+  setInterval(pollLive, LIVE_POLL_MS);
+
+  runBtn.addEventListener('click', () => {
+    runBtn.disabled = true;
+    runBtn.textContent = '요청 보내는 중...';
+    fetch('/api/run-now', { method: 'POST' })
+      .then(r => r.json().then(data => ({ ok: r.ok, message: data.message })))
+      .then(({ ok, message }) => {
+        runBtn.textContent = message;
+        if (!ok) setTimeout(() => { runBtn.textContent = RUN_BTN_DEFAULT; runBtn.disabled = false; }, 3000);
+        else pollLive(); // 즉시 한 번 폴링해서 analysisRunning 상태 반영
+      })
+      .catch(() => { runBtn.textContent = '실시간 서버에서만 사용 가능합니다'; setTimeout(() => { runBtn.textContent = RUN_BTN_DEFAULT; runBtn.disabled = false; }, 3000); });
+  });
+</script>
+</body>
+</html>

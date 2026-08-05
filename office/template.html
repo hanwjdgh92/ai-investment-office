@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>나의 AI 투자 오피스</title>
+<style>
+  :root {
+    --bg-top: #fdf3ff;
+    --bg-bottom: #eef4ff;
+    --panel-bg: #ffffffcc;
+    --text-main: #2c2c3a;
+    --text-sub: #6b6b80;
+    --border: #e6e3f5;
+    --accent: #7c6cf0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-top: #201c2e;
+      --bg-bottom: #16141f;
+      --panel-bg: #2a2638cc;
+      --text-main: #ecebf5;
+      --text-sub: #a5a2ba;
+      --border: #3a3650;
+      --accent: #a99bff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg-top: #201c2e;
+    --bg-bottom: #16141f;
+    --panel-bg: #2a2638cc;
+    --text-main: #ecebf5;
+    --text-sub: #a5a2ba;
+    --border: #3a3650;
+    --accent: #a99bff;
+  }
+  :root[data-theme="light"] {
+    --bg-top: #fdf3ff;
+    --bg-bottom: #eef4ff;
+    --panel-bg: #ffffffcc;
+    --text-main: #2c2c3a;
+    --text-sub: #6b6b80;
+    --border: #e6e3f5;
+    --accent: #7c6cf0;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+    color: var(--text-main);
+    background: linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+    padding: 24px;
+  }
+
+  .app { max-width: 1180px; margin: 0 auto; }
+
+  header.topbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 18px 24px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+  .brand { display: flex; flex-direction: column; gap: 4px; }
+  .brand h1 { margin: 0; font-size: 1.4rem; }
+  .brand .meta { font-size: 0.82rem; color: var(--text-sub); }
+
+  .run-now-btn {
+    border: none; border-radius: 999px; padding: 10px 18px; font-size: 0.85rem; font-weight: 600;
+    background: var(--accent); color: white; cursor: pointer;
+  }
+  .run-now-btn:disabled { opacity: 0.6; cursor: default; }
+
+  .layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+  /* ---- 오피스 타일맵 (부서 구역): 3개 자산군 부서(크립토/국내주식/해외주식) + PM/TRADING/RISK ----
+     모든 존은 같은 어두운 베이스를 공유하고, 부서마다 --zone-accent 색만 달라진다(상단 바/라벨/장식/은은한 글로우).
+     방마다 완전히 다른 색을 칠하는 대신 "같은 오피스, 다른 팻말"처럼 보이게 하는 게 목표. */
+  .office-map {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-areas:
+      "crypto krstock usstock"
+      "pm trading risk";
+    gap: 12px;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    padding: 12px;
+    background: #0a0912;
+    box-shadow: inset 0 0 60px rgba(0,0,0,0.5);
+  }
+  @media (max-width: 640px) {
+    .office-map { grid-template-columns: 1fr; grid-template-areas: "crypto" "krstock" "usstock" "pm" "trading" "risk"; }
+  }
+
+  .zone {
+    position: relative;
+    border-radius: 14px;
+    min-height: 160px;
+    padding: 38px 12px 12px;
+    background-color: #161a26;
+    background-image:
+      radial-gradient(circle at 88% -12%, var(--zone-accent) 0%, transparent 48%),
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 100% 100%, 22px 22px, 22px 22px;
+    background-blend-mode: normal, normal, normal;
+    border-top: 3px solid var(--zone-accent);
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.35), 0 6px 16px rgba(0,0,0,0.3);
+  }
+  .zone[data-team="크립토"]    { grid-area: crypto;   --zone-accent: #f2a33d; }
+  .zone[data-team="국내주식"]  { grid-area: krstock;  --zone-accent: #6fb3e8; }
+  .zone[data-team="해외주식"]  { grid-area: usstock;  --zone-accent: #4fd0a0; }
+  .zone[data-team="PM"]        { grid-area: pm;       --zone-accent: #f2d43d; }
+  .zone[data-team="TRADING"]   { grid-area: trading;  --zone-accent: #4fd07a; }
+  .zone[data-team="RISK MGMT"] { grid-area: risk;     --zone-accent: #e8564f; }
+
+  .zone-label {
+    position: absolute; top: 10px; left: 10px;
+    font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em;
+    color: #12121a; background: var(--zone-accent);
+    padding: 4px 12px; border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  }
+  .zone-decor {
+    position: absolute; top: 8px; right: 10px;
+    background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 4px 7px;
+  }
+  .decor-icon { width: 70px; height: 20px; display: block; }
+
+  /* 전원 잠금 상태인 존(TRADING/RISK MGMT)은 텅 빈 느낌이 나지 않게 대각선 패턴 + 워터마크를 깔아준다 */
+  .zone.all-locked {
+    background-image:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.035) 0 10px, transparent 10px 20px),
+      radial-gradient(circle at 88% -12%, var(--zone-accent) 0%, transparent 48%),
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: auto, 100% 100%, 22px 22px, 22px 22px;
+  }
+  .zone.all-locked::after {
+    content: '준비 중';
+    position: absolute; right: 14px; bottom: 10px;
+    font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.18);
+  }
+
+  .zone-floor { display: flex; flex-direction: column; gap: 10px; }
+  .subteam-label {
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6); margin-bottom: 6px; padding-top: 8px;
+    border-top: 1px dashed rgba(255,255,255,0.18);
+  }
+  .subteam:first-child .subteam-label { border-top: none; padding-top: 0; }
+  .subteam-floor { display: flex; flex-wrap: wrap; gap: 14px; align-content: flex-start; }
+
+  .desk-unit {
+    width: 76px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: pointer;
+    border-radius: 10px;
+    padding: 4px;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .desk-unit:not(.locked):hover { transform: translateY(-3px); background: rgba(255,255,255,0.06); }
+  .desk-unit.locked { cursor: default; filter: grayscale(1); opacity: 0.55; }
+
+  .sprite-wrap { position: relative; }
+  .pixel-person {
+    width: 34px; height: 51px;
+    animation: bob 2.4s ease-in-out infinite;
+  }
+  .desk-unit.locked .pixel-person { animation: none; }
+  .desk-unit.working .sprite-wrap { animation: walk 1.6s ease-in-out infinite; }
+  .lock-badge { position: absolute; top: -4px; right: -6px; font-size: 12px; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @keyframes walk { 0%, 100% { transform: translateX(-4px); } 50% { transform: translateX(4px); } }
+
+  .status-label { font-size: 0.62rem; color: #fff; opacity: 0.85; margin-top: 3px; white-space: nowrap; }
+
+  .nameplate {
+    font-size: 0.66rem; font-weight: 700; color: #fff; background: rgba(0,0,0,0.55);
+    padding: 2px 7px; border-radius: 999px; white-space: nowrap; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .desk-prop { width: 30px; height: 8px; background: #6b4a2f; border-radius: 2px; position: relative; margin-top: 2px; }
+  .desk-prop .desk-monitor {
+    position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    width: 10px; height: 6px; background: #1b1b22; border-radius: 1px;
+  }
+  .desk-status {
+    width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 3px;
+  }
+  .desk-status.done { background: #33c17c; }
+  .desk-status.pending { background: #b8b3c9; }
+  .desk-status.locked { background: #7a7a7a; }
+
+  aside.console {
+    border-radius: 20px; border: 1px solid var(--border); background: var(--panel-bg);
+    padding: 16px; max-height: 560px; overflow-y: auto; backdrop-filter: blur(6px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+  aside.console h2 { margin: 0 0 12px; font-size: 1rem; }
+  .feed-group { margin-bottom: 8px; }
+  .feed-group:last-child { margin-bottom: 0; }
+  .feed-group summary {
+    cursor: pointer; list-style: none; user-select: none;
+    font-size: 0.74rem; font-weight: 800; letter-spacing: 0.05em; color: var(--text-sub);
+    text-transform: uppercase; padding: 8px 4px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .feed-group summary::-webkit-details-marker { display: none; }
+  .feed-group summary::before { content: '▸'; font-size: 0.7rem; transition: transform 0.15s ease; }
+  .feed-group[open] summary::before { transform: rotate(90deg); }
+  .feed-group .feed-item { margin: 10px 0 0; }
+  .feed-item { border-left: 3px solid var(--accent); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; background: var(--bg-bottom); }
+  .feed-item .fhead { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; }
+  .feed-item .ftext { font-size: 0.86rem; white-space: pre-wrap; }
+
+  .empty-note { color: var(--text-sub); font-size: 0.85rem; }
+
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+    align-items: center; justify-content: center; padding: 20px; z-index: 10;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--panel-bg); border: 1px solid var(--border); border-radius: 18px;
+    max-width: 560px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 22px;
+    color: var(--text-main);
+  }
+  .modal h3 { margin-top: 0; }
+  .modal-body { font-size: 0.9rem; line-height: 1.6; }
+  .modal-body p { margin: 0 0 12px; }
+  .modal-body h4 { margin: 16px 0 6px; font-size: 0.86rem; color: var(--text-sub); }
+  .modal-body h4:first-child { margin-top: 0; }
+  .modal-body ul { margin: 0 0 12px; padding-left: 1.2em; }
+  .modal-body li { margin-bottom: 8px; }
+  .modal-body li:last-child { margin-bottom: 0; }
+  .modal-body strong { color: var(--accent); }
+  .modal .close-btn {
+    float: right; border: none; background: var(--bg-bottom); border-radius: 999px;
+    width: 28px; height: 28px; cursor: pointer; font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <h1 id="office-title">나의 AI 투자 오피스</h1>
+      <div class="meta" id="office-meta">불러오는 중...</div>
+    </div>
+    <button id="run-now-btn" class="run-now-btn">지금 분석 받기</button>
+  </header>
+
+  <div class="layout">
+    <main class="office-map" id="office-map"></main>
+    <aside class="console">
+      <h2>Report</h2>
+      <div id="feed"></div>
+    </aside>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <button class="close-btn" id="modal-close">✕</button>
+    <h3 id="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+  </div>
+</div>
+
+<script>
+  window.__OFFICE_DATA__ = /*__OFFICE_DATA_JSON__*/;
+
+  const mapEl = document.getElementById('office-map');
+  const feedEl = document.getElementById('feed');
+  const TEAM_ORDER = ['크립토', '국내주식', '해외주식', 'PM', 'TRADING', 'RISK MGMT'];
+  const TEAM_LABELS = {
+    '크립토': '크립토 데스크', '국내주식': '국내주식 데스크', '해외주식': '해외주식 데스크',
+    'PM': 'PM OFFICE', 'TRADING': 'TRADING', 'RISK MGMT': 'RISK MGMT',
+  };
+  // 팀마다 하는 일이 한눈에 보이도록 존 상단에 붙이는 장식 아이콘(캔들차트/추세선/지구본+막대/책장/시계+티커/경고게이지).
+  const TEAM_DECOR = {
+    '크립토': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <rect x="2" y="4" width="2" height="12" fill="#e0574f"/><rect x="1" y="7" width="4" height="6" fill="#e0574f"/>
+      <rect x="12" y="2" width="2" height="16" fill="#4fd07a"/><rect x="11" y="6" width="4" height="8" fill="#4fd07a"/>
+      <rect x="22" y="6" width="2" height="10" fill="#e0574f"/><rect x="21" y="9" width="4" height="5" fill="#e0574f"/>
+      <rect x="32" y="1" width="2" height="18" fill="#4fd07a"/><rect x="31" y="4" width="4" height="10" fill="#4fd07a"/>
+      <rect x="42" y="5" width="2" height="11" fill="#4fd07a"/><rect x="41" y="8" width="4" height="6" fill="#4fd07a"/>
+    </svg>`,
+    '국내주식': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <polyline points="2,18 14,11 26,14 38,5 50,8" fill="none" stroke="#6fb3e8" stroke-width="2"/>
+      <rect x="48" y="0" width="5" height="5" fill="#6fb3e8"/>
+    </svg>`,
+    '해외주식': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <rect x="2" y="10" width="6" height="8" fill="#4fd0a0"/><rect x="11" y="4" width="6" height="14" fill="#4fd0a0"/>
+      <rect x="20" y="8" width="6" height="10" fill="#4fd0a0"/>
+      <circle cx="45" cy="10" r="8" fill="none" stroke="#4fd0a0" stroke-width="2"/>
+      <line x1="37" y1="10" x2="53" y2="10" stroke="#4fd0a0" stroke-width="1"/>
+    </svg>`,
+    'PM': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <rect x="1" y="1" width="58" height="18" fill="none" stroke="#f2d43d" stroke-width="1.5"/>
+      <rect x="6" y="4" width="4" height="12" fill="#e0574f"/><rect x="12" y="4" width="4" height="12" fill="#4fd07a"/>
+      <rect x="18" y="4" width="4" height="12" fill="#6fb3e8"/><rect x="24" y="4" width="4" height="12" fill="#f2a33d"/>
+      <rect x="30" y="4" width="4" height="12" fill="#a99bff"/><rect x="36" y="4" width="4" height="12" fill="#4fd0a0"/>
+    </svg>`,
+    'TRADING': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <circle cx="10" cy="10" r="8" fill="none" stroke="#4fd07a" stroke-width="2"/>
+      <line x1="10" y1="10" x2="10" y2="5" stroke="#4fd07a" stroke-width="2"/>
+      <line x1="10" y1="10" x2="14" y2="10" stroke="#4fd07a" stroke-width="2"/>
+      <rect x="24" y="5" width="34" height="10" fill="#0c1a10" stroke="#4fd07a"/>
+      <rect x="27" y="8" width="4" height="4" fill="#4fd07a"/><rect x="34" y="8" width="4" height="4" fill="#e0574f"/>
+      <rect x="41" y="8" width="4" height="4" fill="#4fd07a"/><rect x="48" y="8" width="4" height="4" fill="#e0574f"/>
+    </svg>`,
+    'RISK MGMT': `<svg viewBox="0 0 60 20" class="decor-icon" shape-rendering="crispEdges">
+      <rect x="2" y="12" width="6" height="6" fill="#e8564f"/><rect x="11" y="8" width="6" height="10" fill="#e8564f"/>
+      <rect x="20" y="4" width="6" height="14" fill="#e8564f"/>
+      <path d="M38 17 L45 3 L52 17 Z" fill="none" stroke="#e8564f" stroke-width="2"/>
+      <rect x="43.5" y="9" width="3" height="4" fill="#e8564f"/><rect x="43.5" y="14" width="3" height="2" fill="#e8564f"/>
+    </svg>`,
+  };
+
+  // 8x12 픽셀 그리드로 그린 단순 사람 스프라이트. 셔츠 색은 직원 색상, 머리색은 id로 고정 배정해 다양성을 줌.
+  const HAIR_COLORS = ['#2b1d14', '#5b3a29', '#1a1a1a', '#8a5a2b', '#d9c9a3', '#c26b3f'];
+  function hairColorFor(id) {
+    let sum = 0;
+    for (let i = 0; i < id.length; i++) sum += id.charCodeAt(i);
+    return HAIR_COLORS[sum % HAIR_COLORS.length];
+  }
+  function pixelPersonSvg(shirtColor, hairColor) {
+    return `
+      <svg class="pixel-person" viewBox="0 0 8 12" shape-rendering="crispEdges">
+        <rect x="1" y="4" width="6" height="5" fill="${shirtColor}"/>
+        <rect x="2" y="9" width="2" height="3" fill="#33384a"/>
+        <rect x="4" y="9" width="2" height="3" fill="#33384a"/>
+        <rect x="1" y="11" width="6" height="1" fill="#2b2b33"/>
+        <rect x="2" y="2" width="4" height="2" fill="#f0c9a0"/>
+        <rect x="1" y="0" width="6" height="2" fill="${hairColor}"/>
+      </svg>
+    `;
+  }
+
+  const SUBTEAM_ORDER = ['ANALYSTS', 'RESEARCH'];
+  const SUBTEAM_LABELS = { ANALYSTS: '애널리스트', RESEARCH: '리서치' };
+
+  function buildDeskUnit(emp) {
+    const unit = document.createElement('div');
+    const statusClass = emp.placeholder ? 'locked' : (emp.status === 'done' ? 'done' : 'pending');
+    unit.className = 'desk-unit' + (emp.placeholder ? ' locked' : (statusClass === 'pending' ? ' working' : ''));
+    const statusLabel = emp.placeholder ? '🔒 대기' : (statusClass === 'done' ? '✅ 완료' : '⏳ 분석 중');
+    unit.innerHTML = `
+      <div class="sprite-wrap">
+        ${pixelPersonSvg(emp.color, hairColorFor(emp.id))}
+        ${emp.placeholder ? '<span class="lock-badge">🔒</span>' : ''}
+      </div>
+      <div class="nameplate"><span class="desk-status ${statusClass}"></span>${emp.name}</div>
+      <div class="desk-prop"><div class="desk-monitor"></div></div>
+      <div class="status-label">${statusLabel}</div>
+    `;
+    unit.title = emp.placeholder ? emp.statusText : `${emp.role} · ${emp.statusText}`;
+    unit.addEventListener('click', () => openModal(emp));
+    return unit;
+  }
+
+  // 원문(마크다운 비슷한 텍스트: "- **BTC**: ..." 글머리, "### " 헤더)을 문단/리스트로 나눠서 보여준다.
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function formatAnalysisText(text) {
+    const lines = (text || '').split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return '<p>아직 작성된 분석이 없습니다.</p>';
+    let html = '';
+    let inList = false;
+    const closeList = () => { if (inList) { html += '</ul>'; inList = false; } };
+    const render = s => escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    lines.forEach(line => {
+      const isBullet = /^[-*]\s+/.test(line);
+      const isHeading = /^#{1,4}\s+/.test(line);
+      const content = line.replace(/^[-*]\s+/, '').replace(/^#{1,4}\s+/, '');
+      if (isHeading) {
+        closeList();
+        html += `<h4>${render(content)}</h4>`;
+        return;
+      }
+      // 줄바꿈 없이 "종목: ... . 종목: ... ." 식으로 이어진 원문은 문장 단위로 쪼개 리스트로 보여준다.
+      const sentences = content.split(/(?<=[.!?])\s+(?=\S)/).filter(Boolean);
+      if (isBullet || sentences.length > 1) {
+        if (!inList) { html += '<ul>'; inList = true; }
+        sentences.forEach(s => { html += `<li>${render(s)}</li>`; });
+      } else {
+        closeList();
+        html += `<p>${render(content)}</p>`;
+      }
+    });
+    closeList();
+    return html;
+  }
+
+  const backdrop = document.getElementById('modal-backdrop');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  function openModal(emp) {
+    modalTitle.textContent = `${emp.emoji} ${emp.name} — 오늘의 분석`;
+    modalBody.innerHTML = formatAnalysisText(emp.fullText);
+    backdrop.classList.add('open');
+  }
+  document.getElementById('modal-close').addEventListener('click', () => backdrop.classList.remove('open'));
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.classList.remove('open'); });
+
+  function renderOffice(data) {
+    document.getElementById('office-title').textContent = data.title;
+    const activeCount = data.employees.filter(e => !e.placeholder).length;
+    document.getElementById('office-meta').textContent =
+      `AI STAFF ${activeCount}명(+대기 ${data.employees.length - activeCount}) · 마지막 업데이트 ${data.generatedAt}`;
+
+    const byTeam = {};
+    data.employees.forEach(emp => {
+      (byTeam[emp.team] = byTeam[emp.team] || []).push(emp);
+    });
+
+    mapEl.innerHTML = '';
+    TEAM_ORDER.forEach(team => {
+      const members = byTeam[team];
+      if (!members) return;
+      const zone = document.createElement('section');
+      zone.className = 'zone' + (members.every(m => m.placeholder) ? ' all-locked' : '');
+      zone.dataset.team = team;
+      zone.innerHTML = `
+        <div class="zone-label">${TEAM_LABELS[team] || team}</div>
+        <div class="zone-decor">${TEAM_DECOR[team] || ''}</div>
+        <div class="zone-floor"></div>
+      `;
+      const floor = zone.querySelector('.zone-floor');
+
+      const bySubteam = {};
+      members.forEach(emp => {
+        const key = emp.subteam || '';
+        (bySubteam[key] = bySubteam[key] || []).push(emp);
+      });
+      const subteamKeys = SUBTEAM_ORDER.filter(k => bySubteam[k]);
+
+      if (subteamKeys.length === 0) {
+        // 부서 내 애널리스트/리서치 구분이 없는 존(PM, TRADING, RISK MGMT)은 그냥 한 층에 배치
+        members.forEach(emp => floor.appendChild(buildDeskUnit(emp)));
+      } else {
+        subteamKeys.forEach(key => {
+          const sub = document.createElement('div');
+          sub.className = 'subteam';
+          sub.innerHTML = `<div class="subteam-label">${SUBTEAM_LABELS[key] || key}</div><div class="subteam-floor"></div>`;
+          const subFloor = sub.querySelector('.subteam-floor');
+          bySubteam[key].forEach(emp => subFloor.appendChild(buildDeskUnit(emp)));
+          floor.appendChild(sub);
+        });
+      }
+
+      mapEl.appendChild(zone);
+    });
+
+    if (data.consoleFeed.length === 0) {
+      feedEl.innerHTML = '<div class="empty-note">아직 콘솔에 올라온 내용이 없습니다. /daily-report를 실행해보세요.</div>';
+    } else {
+      feedEl.innerHTML = '';
+      data.consoleFeed.forEach((group, idx) => {
+        const details = document.createElement('details');
+        details.className = 'feed-group';
+        if (idx === 0) details.open = true; // 첫 카테고리만 기본으로 펼침
+        const summary = document.createElement('summary');
+        summary.textContent = `${group.category} (${group.items.length})`;
+        details.appendChild(summary);
+        group.items.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'feed-item';
+          div.innerHTML = `
+            <div class="fhead"><span>${item.emoji} ${item.name}</span><span>${item.time}</span></div>
+            <div class="ftext">${item.text}</div>
+          `;
+          details.appendChild(div);
+        });
+        feedEl.appendChild(details);
+      });
+    }
+  }
+
+  renderOffice(window.__OFFICE_DATA__);
+
+  // 로컬 서버(scripts/serve_office.py)로 서빙 중일 때만 /api/live가 응답한다.
+  // file://로 직접 열었을 때는 fetch가 실패하므로 조용히 무시하고 스냅샷만 보여준다.
+  const runBtn = document.getElementById('run-now-btn');
+  const RUN_BTN_DEFAULT = runBtn.textContent;
+  let wasRunning = false;
+
+  const LIVE_POLL_MS = 30000;
+  function pollLive() {
+    fetch('/api/live', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!data) return;
+        renderOffice(data);
+        // 버튼 상태는 실제 분석 프로세스 실행 여부로 결정 (타이머로 눈감고 리셋하지 않음)
+        runBtn.disabled = data.analysisRunning;
+        if (data.analysisRunning) {
+          runBtn.textContent = '분석 중... (완료되면 자동 반영)';
+        } else if (data.analysisFailed) {
+          runBtn.textContent = '분석 실패 - logs 폴더 확인 (다시 시도하려면 클릭)';
+        } else {
+          runBtn.textContent = RUN_BTN_DEFAULT;
+        }
+        // 분석이 막 끝난 시점(실행중 → 완료)이면 종합 리포트를 팝업으로 띄운다 (성공했을 때만)
+        if (wasRunning && !data.analysisRunning && !data.analysisFailed) {
+          const chief = data.employees.find(e => e.id === 'chief-strategist');
+          if (chief) openModal(chief);
+        }
+        wasRunning = data.analysisRunning;
+      })
+      .catch(() => {});
+  }
+  setInterval(pollLive, LIVE_POLL_MS);
+
+  runBtn.addEventListener('click', () => {
+    runBtn.disabled = true;
+    runBtn.textContent = '요청 보내는 중...';
+    fetch('/api/run-now', { method: 'POST' })
+      .then(r => r.json().then(data => ({ ok: r.ok, message: data.message })))
+      .then(({ ok, message }) => {
+        runBtn.textContent = message;
+        if (!ok) setTimeout(() => { runBtn.textContent = RUN_BTN_DEFAULT; runBtn.disabled = false; }, 3000);
+        else pollLive(); // 즉시 한 번 폴링해서 analysisRunning 상태 반영
+      })
+      .catch(() => { runBtn.textContent = '실시간 서버에서만 사용 가능합니다'; setTimeout(() => { runBtn.textContent = RUN_BTN_DEFAULT; runBtn.disabled = false; }, 3000); });
+  });
+</script>
+</body>
+</html>

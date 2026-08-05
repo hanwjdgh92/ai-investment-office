@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell",
+      "Write",
+      "Task",
+      "WebSearch",
+      "WebFetch"
+    ]
+  }
+}

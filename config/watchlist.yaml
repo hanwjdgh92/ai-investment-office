@@ -1,0 +1,25 @@
+# 관심 종목/코인 목록
+# 자유롭게 추가/삭제하세요. 심볼은 아래 형식을 따릅니다.
+
+crypto:
+  # 업비트 마켓 코드(KRW- 접두사) 기준. 바이빗 조회 시 자동으로 USDT 페어로 매핑됩니다.
+  - symbol: BTC
+    upbit_market: KRW-BTC
+    bybit_symbol: BTCUSDT
+  - symbol: ETH
+    upbit_market: KRW-ETH
+    bybit_symbol: ETHUSDT
+
+stocks_kr:
+  # 종목명과 6자리 종목코드
+  - name: 삼성전자
+    code: "005930"
+  - name: SK하이닉스
+    code: "000660"
+
+stocks_us:
+  # 야후 파이낸스 티커
+  - name: Apple
+    ticker: AAPL
+  - name: NVIDIA
+    ticker: NVDA

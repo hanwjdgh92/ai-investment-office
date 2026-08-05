@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Apple",
+    "ticker": "AAPL",
+    "date": "2026-08-03",
+    "close": NaN,
+    "change_rate": NaN,
+    "volume": 71988041,
+    "recent_closes": [
+      340.0799865722656,
+      338.19000244140625,
+      333.42999267578125,
+      308.9100036621094,
+      NaN
+    ],
+    "indicators": {
+      "ma5": 330.1525,
+      "ma20": 324.9832,
+      "ma60": 307.4033,
+      "rsi14": NaN
+    },
+    "fundamentals": {
+      "per": 34.835823,
+      "pbr": 41.225544,
+      "marketCap": 4428166332416,
+      "fiftyTwoWeekHigh": 344.57,
+      "fiftyTwoWeekLow": 201.68
+    }
+  },
+  {
+    "name": "NVIDIA",
+    "ticker": "NVDA",
+    "date": "2026-08-03",
+    "close": NaN,
+    "change_rate": NaN,
+    "volume": 127547828,
+    "recent_closes": [
+      197.00999450683594,
+      190.00999450683594,
+      195.0399932861328,
+      200.75,
+      NaN
+    ],
+    "indicators": {
+      "ma5": 195.7025,
+      "ma20": 203.7042,
+      "ma60": 208.4848,
+      "rsi14": NaN
+    },
+    "fundamentals": {
+      "per": 31.69325,
+      "pbr": 25.60595,
+      "marketCap": 5005027311616,
+      "fiftyTwoWeekHigh": 236.54,
+      "fiftyTwoWeekLow": 164.07
+    }
+  }
+]
