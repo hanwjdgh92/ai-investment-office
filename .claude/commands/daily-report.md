@@ -12,17 +12,18 @@ description: 암호화폐/국내주식/해외주식 데이터를 수집하고 �
    - `python scripts\fetch_macro.py`
    (python이 PATH에 없다면 `$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")` 를 먼저 실행)
 
-2. **애널리스트팀**: 아래 12개 서브에이전트를 호출해 오늘 데이터를 분석하게 합니다. 모두 서로 독립적이므로 병렬로 호출하세요.
-   - 크립토 데스크: `candle`, `vibes`, `chain`, `proto`
-   - 국내주식 데스크: `chart`, `scoop`, `mood`, `ledger`
-   - 해외주식 데스크: `trend`, `herald`, `pulse`, `vault`
+2. **애널리스트팀**: 아래 9개 서브에이전트를 호출해 오늘 데이터를 분석하게 합니다. 모두 서로 독립적이므로 병렬로 호출하세요.
+   - 크립토 데스크: `candle`, `proto`, `vibes`
+   - 국내주식 데스크: `chart`, `ledger`, `mood`
+   - 해외주식 데스크: `trend`, `vault`, `pulse`
 
-3. **리서치팀 (데스크별 독립 진행)**: 아래 3개 데스크 각각에서 강세/약세 담당을 병렬로 호출한 뒤, 그 데스크의 리서치 매니저에게 전달해 종합합니다. 세 데스크는 서로 완전히 독립적이므로 전체를 한꺼번에 병렬로 호출해도 됩니다.
-   - 크립토 데스크: `ape`(강세)·`fud`(약세) 병렬 호출 → 결과를 `node`에게 전달해 종합
-   - 국내주식 데스크: `rally`(강세)·`slump`(약세) 병렬 호출 → 결과를 `anchor`에게 전달해 종합
-   - 해외주식 데스크: `surge`(강세)·`drag`(약세) 병렬 호출 → 결과를 `compass`에게 전달해 종합
+3. **리서치팀 (데스크별 독립 진행)**: 아래 3개 데스크별 리서치 종합 담당에게 같은 데스크의 애널리스트 3명
+   결과를 전달해 호출합니다. 세 데스크는 서로 완전히 독립적이므로 전체를 한꺼번에 병렬로 호출해도 됩니다.
+   - 크립토 데스크: `candle`/`proto`/`vibes` 결과 → `node`에게 전달해 종합
+   - 국내주식 데스크: `chart`/`ledger`/`mood` 결과 → `anchor`에게 전달해 종합
+   - 해외주식 데스크: `trend`/`vault`/`pulse` 결과 → `compass`에게 전달해 종합
 
-4. **PM**: 2번의 12개 분석 결과와 3번의 데스크별 리서치 결과(ape/fud/node, rally/slump/anchor, surge/drag/compass 9개)를 `chief-strategist` 서브에이전트에게 전달해 최종 종합 리포트를 `reports/YYYY-MM-DD.md`로 작성하게 합니다.
+4. **PM**: 2번의 9개 분석 결과와 3번의 리서치 종합 결과(node/anchor/compass 3개)를 `chief-strategist` 서브에이전트에게 전달해 최종 종합 리포트를 `reports/YYYY-MM-DD.md`로 작성하게 합니다.
 
 5. `python scripts\generate_office.py`를 실행해 최신 데이터/리포트를 반영한 `office\index.html`을 생성합니다.
 
