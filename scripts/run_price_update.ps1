@@ -6,14 +6,21 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";
 
 Set-Location $ProjectRoot
 
+$hasError = $false
 $pyScripts = @("fetch_crypto.py", "fetch_stocks_kr.py", "fetch_stocks_us.py", "fetch_macro.py", "generate_office.py")
 foreach ($script in $pyScripts) {
     try {
         python "scripts\$script"
         if ($LASTEXITCODE -ne 0) {
             Write-Output "실패: $script (종료 코드 $LASTEXITCODE)"
+            $hasError = $true
         }
     } catch {
         Write-Output "실패: $script - $_"
+        $hasError = $true
     }
+}
+
+if ($hasError) {
+    exit 1
 }
