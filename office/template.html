@@ -534,7 +534,6 @@
       data.consoleFeed.forEach((group, idx) => {
         const details = document.createElement('details');
         details.className = 'feed-group';
-        if (idx === 0) details.open = true; // 첫 카테고리만 기본으로 펼침
         const summary = document.createElement('summary');
         summary.textContent = `${group.category} (${group.items.length})`;
         details.appendChild(summary);
