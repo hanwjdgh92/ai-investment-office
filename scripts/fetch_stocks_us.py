@@ -15,6 +15,15 @@ CONFIG_PATH = ROOT / "config" / "watchlist.yaml"
 DATA_DIR = ROOT / "data"
 
 
+def fetch_name(ticker: str) -> str:
+    """관심종목 추가 시 사용: 티커로 회사명을 조회한다."""
+    info = yf.Ticker(ticker).info
+    name = info.get("shortName") or info.get("longName")
+    if not name:
+        raise ValueError("종목명을 확인할 수 없습니다 (잘못된 티커일 수 있음)")
+    return name
+
+
 def fetch_recent(ticker: str) -> dict:
     t = yf.Ticker(ticker)
     hist = t.history(period="6mo")
