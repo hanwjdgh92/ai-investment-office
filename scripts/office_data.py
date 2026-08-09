@@ -359,7 +359,8 @@ def build_office_data() -> dict:
     for team in ("크립토", "국내주식", "해외주식"):
         wl_key = WATCHLIST_KEY[team]
         match_field = WATCHLIST_MATCH_FIELD[wl_key]
-        team_employees = [e for e in EMPLOYEES if e["team"] == team and not e.get("placeholder")]
+        # 종목카드에는 애널리스트 개별 원문이 아니라 데스크 리서치 종합(강세/약세 저울질 결과)만 보여준다.
+        team_employees = [e for e in EMPLOYEES if e["team"] == team and e.get("subteam") == "RESEARCH"]
 
         cards = []
         for item in watchlist[wl_key]:

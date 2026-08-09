@@ -460,13 +460,9 @@
       if (isHeading) {
         closeList();
         html += `<h4>${render(content)}</h4>`;
-        return;
-      }
-      // 줄바꿈 없이 "종목: ... . 종목: ... ." 식으로 이어진 원문은 문장 단위로 쪼개 리스트로 보여준다.
-      const sentences = content.split(/(?<=[.!?])\s+(?=\S)/).filter(Boolean);
-      if (isBullet || sentences.length > 1) {
+      } else if (isBullet) {
         if (!inList) { html += '<ul>'; inList = true; }
-        sentences.forEach(s => { html += `<li>${render(s)}</li>`; });
+        html += `<li>${render(content)}</li>`;
       } else {
         closeList();
         html += `<p>${render(content)}</p>`;
