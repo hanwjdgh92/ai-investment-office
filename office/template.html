@@ -80,7 +80,8 @@
   }
   .run-now-btn:disabled { opacity: 0.6; cursor: default; }
 
-  .layout { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
+  .layout { display: grid; grid-template-columns: 1fr 440px; gap: 20px; align-items: start; }
+  @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
 
   /* ---- 오피스 타일맵 (부서 구역): 3개 자산군 부서(크립토/국내주식/해외주식) + PM/TRADING/RISK ----
      모든 존은 같은 어두운 베이스를 공유하고, 부서마다 --zone-accent 색만 달라진다(상단 바/라벨/장식/은은한 글로우).
@@ -208,7 +209,7 @@
 
   aside.console {
     border-radius: 20px; border: 1px solid var(--border); background: var(--panel-bg);
-    padding: 20px 24px; backdrop-filter: blur(6px);
+    padding: 20px 24px; max-height: 720px; overflow-y: auto; backdrop-filter: blur(6px);
     box-shadow: 0 6px 20px rgba(0,0,0,0.08);
   }
   aside.console h2 { margin: 0 0 12px; font-size: 1rem; }
