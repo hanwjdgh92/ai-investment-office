@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fetch_crypto  # noqa: E402
 import fetch_stocks_kr  # noqa: E402
 import fetch_stocks_us  # noqa: E402
+import watchlist_store  # noqa: E402
 from office_data import build_office_data  # noqa: E402
 
 HOST = "127.0.0.1"
@@ -61,12 +62,22 @@ class OfficeHandler(BaseHTTPRequestHandler):
             self._serve_index()
         elif self.path == "/api/live":
             self._serve_live()
+        elif self.path == "/api/watchlist":
+            self._get_watchlist()
         else:
             self.send_error(404, "Not Found")
 
     def do_POST(self) -> None:  # noqa: N802
         if self.path == "/api/run-now":
             self._run_now()
+        elif self.path == "/api/watchlist":
+            self._add_watchlist_item()
+        else:
+            self.send_error(404, "Not Found")
+
+    def do_DELETE(self) -> None:  # noqa: N802
+        if self.path == "/api/watchlist":
+            self._delete_watchlist_item()
         else:
             self.send_error(404, "Not Found")
 
@@ -112,6 +123,121 @@ class OfficeHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def _read_json_body(self) -> dict:
+        length = int(self.headers.get("Content-Length", 0))
+        raw = self.rfile.read(length) if length else b"{}"
+        return json.loads(raw or b"{}")
+
+    def _send_json(self, status: int, payload: dict) -> None:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _get_watchlist(self) -> None:
+        self._send_json(200, watchlist_store.load())
+
+    def _add_watchlist_item(self) -> None:
+        try:
+            body = self._read_json_body()
+        except Exception:  # noqa: BLE001
+            self._send_json(400, {"error": "잘못된 요청 형식입니다."})
+            return
+
+        type_ = body.get("type")
+        symbol = str(body.get("symbol", "")).strip()
+        if type_ not in ("crypto", "stocks_kr", "stocks_us") or not symbol:
+            self._send_json(400, {"error": "type과 symbol이 필요합니다."})
+            return
+
+        data = watchlist_store.load()
+        if watchlist_store.find(data, type_, symbol):
+            self._send_json(400, {"error": "이미 등록된 종목입니다."})
+            return
+
+        warning = None
+        try:
+            if type_ == "crypto":
+                sym = symbol.upper()
+                upbit_market = f"KRW-{sym}"
+                bybit_symbol = f"{sym}USDT"
+                upbit_ok = bybit_ok = False
+                try:
+                    fetch_crypto.fetch_upbit(upbit_market)
+                    upbit_ok = True
+                except Exception:  # noqa: BLE001
+                    pass
+                try:
+                    fetch_crypto.fetch_bybit(bybit_symbol)
+                    bybit_ok = True
+                except Exception:  # noqa: BLE001
+                    pass
+                if not upbit_ok and not bybit_ok:
+                    self._send_json(400, {"error": f"{sym}: 업비트/바이빗 모두 조회 실패"})
+                    return
+                if not bybit_ok:
+                    warning = "바이빗 미지원 (업비트만 조회됨)"
+                elif not upbit_ok:
+                    warning = "업비트 미지원 (바이빗만 조회됨)"
+                name = sym
+                watchlist_store.add(
+                    data, "crypto",
+                    {"symbol": sym, "upbit_market": upbit_market, "bybit_symbol": bybit_symbol},
+                )
+                watchlist_store.save(data)
+                fetch_crypto.main()
+            elif type_ == "stocks_kr":
+                info = fetch_stocks_kr.fetch_name_and_fundamentals(symbol)
+                name = info["name"]
+                watchlist_store.add(data, "stocks_kr", {"name": name, "code": symbol})
+                watchlist_store.save(data)
+                fetch_stocks_kr.main()
+            else:  # stocks_us
+                ticker = symbol.upper()
+                name = fetch_stocks_us.fetch_name(ticker)
+                fetch_stocks_us.fetch_recent(ticker)
+                watchlist_store.add(data, "stocks_us", {"name": name, "ticker": ticker})
+                watchlist_store.save(data)
+                fetch_stocks_us.main()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(400, {"error": f"종목 조회 실패: {exc}"})
+            return
+
+        payload = {"name": name, "status": "ok"}
+        if warning:
+            payload["warning"] = warning
+        self._send_json(202, payload)
+
+    def _delete_watchlist_item(self) -> None:
+        try:
+            body = self._read_json_body()
+        except Exception:  # noqa: BLE001
+            self._send_json(400, {"error": "잘못된 요청 형식입니다."})
+            return
+
+        type_ = body.get("type")
+        symbol = str(body.get("symbol", "")).strip()
+        if type_ not in ("crypto", "stocks_kr", "stocks_us") or not symbol:
+            self._send_json(400, {"error": "type과 symbol이 필요합니다."})
+            return
+
+        data = watchlist_store.load()
+        if not watchlist_store.remove(data, type_, symbol):
+            self._send_json(404, {"error": "등록되지 않은 종목입니다."})
+            return
+        watchlist_store.save(data)
+
+        if type_ == "crypto":
+            fetch_crypto.main()
+        elif type_ == "stocks_kr":
+            fetch_stocks_kr.main()
+        else:
+            fetch_stocks_us.main()
+
+        self._send_json(200, {"status": "ok"})
 
 
 def main() -> None:

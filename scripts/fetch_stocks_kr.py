@@ -64,6 +64,39 @@ def fetch_fundamentals(code: str) -> dict:
     }
 
 
+def fetch_name_and_fundamentals(code: str) -> dict:
+    """관심종목 추가 시 사용: 종목명 + PER/PBR을 한 번의 요청으로 함께 조회한다."""
+    resp = requests.get(
+        f"https://finance.naver.com/item/main.naver?code={code}",
+        headers=HEADERS,
+        timeout=10,
+    )
+    resp.encoding = "utf-8"
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    def parse_num(el):
+        if not el:
+            return None
+        text = el.text.strip().replace(",", "")
+        try:
+            return float(text)
+        except ValueError:
+            return None
+
+    title = soup.title.text if soup.title else ""
+    if ":" not in title:
+        raise ValueError("종목명을 확인할 수 없습니다 (잘못된 코드일 수 있음)")
+    name = title.split(":")[0].strip()
+    if not name:
+        raise ValueError("종목명을 확인할 수 없습니다 (잘못된 코드일 수 있음)")
+
+    return {
+        "name": name,
+        "per": parse_num(soup.select_one("#_per")),
+        "pbr": parse_num(soup.select_one("#_pbr")),
+    }
+
+
 def main() -> None:
     config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
     result = []
