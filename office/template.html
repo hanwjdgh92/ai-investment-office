@@ -80,8 +80,7 @@
   }
   .run-now-btn:disabled { opacity: 0.6; cursor: default; }
 
-  .layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
-  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+  .layout { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
 
   /* ---- 오피스 타일맵 (부서 구역): 3개 자산군 부서(크립토/국내주식/해외주식) + PM/TRADING/RISK ----
      모든 존은 같은 어두운 베이스를 공유하고, 부서마다 --zone-accent 색만 달라진다(상단 바/라벨/장식/은은한 글로우).
@@ -209,7 +208,7 @@
 
   aside.console {
     border-radius: 20px; border: 1px solid var(--border); background: var(--panel-bg);
-    padding: 16px; max-height: 560px; overflow-y: auto; backdrop-filter: blur(6px);
+    padding: 20px 24px; backdrop-filter: blur(6px);
     box-shadow: 0 6px 20px rgba(0,0,0,0.08);
   }
   aside.console h2 { margin: 0 0 12px; font-size: 1rem; }
@@ -224,10 +223,10 @@
   .feed-group summary::-webkit-details-marker { display: none; }
   .feed-group summary::before { content: '▸'; font-size: 0.7rem; transition: transform 0.15s ease; }
   .feed-group[open] summary::before { transform: rotate(90deg); }
-  .feed-group .feed-item { margin: 10px 0 0; }
-  .feed-item { border-left: 3px solid var(--accent); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; background: var(--bg-bottom); }
-  .feed-item .fhead { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; }
-  .feed-item .ftext { font-size: 0.86rem; white-space: pre-wrap; }
+  .feed-group .feed-item { margin: 14px 0 0; }
+  .feed-item { border-left: 3px solid var(--accent); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; background: var(--bg-bottom); }
+  .feed-item .fhead { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 6px; }
+  .feed-item .ftext { font-size: 1rem; line-height: 1.7; white-space: pre-wrap; }
 
   .empty-note { color: var(--text-sub); font-size: 0.85rem; }
 
