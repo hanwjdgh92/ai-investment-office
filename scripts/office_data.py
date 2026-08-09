@@ -6,6 +6,8 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+import watchlist_store
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 REPORTS_DIR = ROOT / "reports"
@@ -195,9 +197,6 @@ EMPLOYEES = [
     },
 ]
 
-TEAM_ORDER = ["크립토", "국내주식", "해외주식", "PM", "TRADING", "RISK MGMT"]
-
-
 def latest_file(pattern: str, directory: Path) -> Path | None:
     files = sorted(directory.glob(pattern), key=lambda p: p.stat().st_mtime)
     return files[-1] if files else None
@@ -275,6 +274,23 @@ def _fundamentals_suffix(fundamentals: dict | None) -> str:
     return f" [PER {per:.1f}]"
 
 
+# 팀명(EMPLOYEES의 "team") → watchlist.yaml 키, 그리고 종목 매칭에 쓸 필드.
+# 애널리스트들은 리포트에 "BTC: ...", "삼성전자: ...", "AAPL: ..." 처럼 이 필드값을 줄 맨 앞에
+# 붙여 쓰는 관례를 따른다 — 이 관례로 텍스트를 종목별로 다시 묶는다(별도 구조화 없이 정규식 매칭).
+WATCHLIST_KEY = {"크립토": "crypto", "국내주식": "stocks_kr", "해외주식": "stocks_us"}
+WATCHLIST_MATCH_FIELD = {"crypto": "symbol", "stocks_kr": "name", "stocks_us": "ticker"}
+
+
+def match_symbol_lines(text: str, match_key: str) -> list[str]:
+    prefix = match_key.upper() + ":"
+    lines = []
+    for line in text.splitlines():
+        line = line.strip()
+        if line.upper().startswith(prefix):
+            lines.append(line)
+    return lines
+
+
 def build_office_data() -> dict:
     report_file = latest_file("*.md", REPORTS_DIR)
     sections = {}
@@ -284,7 +300,7 @@ def build_office_data() -> dict:
         report_time = fmt_time(report_file.stat().st_mtime)
 
     employees_out = []
-    feed = []
+    emp_full_text = {}
 
     for emp in EMPLOYEES:
         if emp.get("placeholder"):
@@ -311,23 +327,15 @@ def build_office_data() -> dict:
             full_text = raw_data_highlights(emp["raw_data_glob"])
 
         has_content = bool(full_text)
-        preview = (
-            full_text[:220] + ("…" if len(full_text) > 220 else "")
-            if full_text
-            else "아직 분석 내용이 없습니다."
-        )
+        emp_full_text[emp["id"]] = full_text
 
         if report_time and any(s in sections for s in emp["report_sections"]):
-            item_time = report_time
             status = "done"
             status_text = "리포트 작성 완료"
         elif has_content:
-            data_file = latest_file(emp["raw_data_glob"], DATA_DIR) if emp["raw_data_glob"] else None
-            item_time = fmt_time(data_file.stat().st_mtime) if data_file else "--:--"
             status = "pending"
             status_text = "데이터 확인 완료 · 분석 대기 중"
         else:
-            item_time = "--:--"
             status = "pending"
             status_text = "대기 중"
 
@@ -346,28 +354,34 @@ def build_office_data() -> dict:
             }
         )
 
-        if has_content:
-            feed.append(
-                {
-                    "team": emp["team"],
-                    "name": emp["name"],
-                    "emoji": emp["emoji"],
-                    "time": item_time,
-                    "text": preview,
-                }
-            )
+    watchlist = watchlist_store.load()
+    watchlist_groups = []
+    for team in ("크립토", "국내주식", "해외주식"):
+        wl_key = WATCHLIST_KEY[team]
+        match_field = WATCHLIST_MATCH_FIELD[wl_key]
+        team_employees = [e for e in EMPLOYEES if e["team"] == team and not e.get("placeholder")]
 
-    feed.sort(key=lambda x: x["time"], reverse=True)
+        cards = []
+        for item in watchlist[wl_key]:
+            match_key = str(item[match_field])
+            label = item.get("name") or match_key
+            if wl_key == "stocks_us":
+                label = f"{label} ({match_key})"
 
-    feed_groups = []
-    for team in TEAM_ORDER:
-        items = [item for item in feed if item["team"] == team]
-        if items:
-            feed_groups.append({"category": team, "items": items})
+            notes = []
+            for emp in team_employees:
+                for line in match_symbol_lines(emp_full_text.get(emp["id"], ""), match_key):
+                    notes.append({"name": emp["name"], "emoji": emp["emoji"], "text": line})
+
+            cards.append({"key": match_key, "label": label, "notes": notes})
+
+        if cards:
+            watchlist_groups.append({"category": team, "items": cards})
 
     return {
         "title": "나의 AI 투자 오피스",
         "generatedAt": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "employees": employees_out,
-        "consoleFeed": feed_groups,
+        "summary": sections.get("오늘의 요약", "").strip(),
+        "watchlistGroups": watchlist_groups,
     }

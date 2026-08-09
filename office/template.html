@@ -224,10 +224,17 @@
   .feed-group summary::-webkit-details-marker { display: none; }
   .feed-group summary::before { content: '▸'; font-size: 0.7rem; transition: transform 0.15s ease; }
   .feed-group[open] summary::before { transform: rotate(90deg); }
-  .feed-group .feed-item { margin: 14px 0 0; }
-  .feed-item { border-left: 3px solid var(--accent); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; background: var(--bg-bottom); }
+  .feed-group .symbol-card { margin: 16px 0 0; }
+  .symbol-card-label { font-size: 0.92rem; font-weight: 800; margin-bottom: 6px; }
+  .feed-item { border-left: 3px solid var(--accent); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; background: var(--bg-bottom); }
   .feed-item .fhead { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 6px; }
   .feed-item .ftext { font-size: 1rem; line-height: 1.7; white-space: pre-wrap; }
+  .symbol-empty { color: var(--text-sub); font-size: 0.85rem; padding-bottom: 4px; }
+
+  .summary-card {
+    border-left: 3px solid var(--accent); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;
+    background: var(--bg-bottom); font-size: 1rem; line-height: 1.7; white-space: pre-wrap;
+  }
 
   .empty-note { color: var(--text-sub); font-size: 0.85rem; }
 
@@ -242,9 +249,9 @@
     color: var(--text-main);
   }
   .modal h3 { margin-top: 0; }
-  .modal-body { font-size: 0.9rem; line-height: 1.6; }
+  .modal-body { font-size: 1rem; line-height: 1.7; }
   .modal-body p { margin: 0 0 12px; }
-  .modal-body h4 { margin: 16px 0 6px; font-size: 0.86rem; color: var(--text-sub); }
+  .modal-body h4 { margin: 16px 0 6px; font-size: 0.92rem; color: var(--text-sub); }
   .modal-body h4:first-child { margin-top: 0; }
   .modal-body ul { margin: 0 0 12px; padding-left: 1.2em; }
   .modal-body li { margin-bottom: 8px; }
@@ -327,6 +334,7 @@
     <main class="office-map" id="office-map"></main>
     <aside class="console">
       <h2>Report</h2>
+      <div id="summary"></div>
       <div id="feed"></div>
     </aside>
   </div>
@@ -344,6 +352,7 @@
   window.__OFFICE_DATA__ = /*__OFFICE_DATA_JSON__*/;
 
   const mapEl = document.getElementById('office-map');
+  const summaryEl = document.getElementById('summary');
   const feedEl = document.getElementById('feed');
   const TEAM_ORDER = ['크립토', '국내주식', '해외주식', 'PM', 'TRADING', 'RISK MGMT'];
   const TEAM_LABELS = {
@@ -527,24 +536,44 @@
       mapEl.appendChild(zone);
     });
 
-    if (data.consoleFeed.length === 0) {
-      feedEl.innerHTML = '<div class="empty-note">아직 콘솔에 올라온 내용이 없습니다. /daily-report를 실행해보세요.</div>';
+    summaryEl.innerHTML = data.summary
+      ? `<div class="summary-card">${data.summary}</div>`
+      : '';
+
+    if (data.watchlistGroups.length === 0) {
+      feedEl.innerHTML = '<div class="empty-note">관심종목이 없습니다. 헤더의 "⚙ 관심종목 관리"에서 추가해보세요.</div>';
     } else {
       feedEl.innerHTML = '';
-      data.consoleFeed.forEach((group, idx) => {
+      data.watchlistGroups.forEach(group => {
         const details = document.createElement('details');
         details.className = 'feed-group';
         const summary = document.createElement('summary');
         summary.textContent = `${group.category} (${group.items.length})`;
         details.appendChild(summary);
         group.items.forEach(item => {
-          const div = document.createElement('div');
-          div.className = 'feed-item';
-          div.innerHTML = `
-            <div class="fhead"><span>${item.emoji} ${item.name}</span><span>${item.time}</span></div>
-            <div class="ftext">${item.text}</div>
-          `;
-          details.appendChild(div);
+          const card = document.createElement('div');
+          card.className = 'symbol-card';
+          const label = document.createElement('div');
+          label.className = 'symbol-card-label';
+          label.textContent = item.label;
+          card.appendChild(label);
+          if (item.notes.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'symbol-empty';
+            empty.textContent = '아직 분석 없음';
+            card.appendChild(empty);
+          } else {
+            item.notes.forEach(note => {
+              const div = document.createElement('div');
+              div.className = 'feed-item';
+              div.innerHTML = `
+                <div class="fhead"><span>${note.emoji} ${note.name}</span></div>
+                <div class="ftext">${note.text}</div>
+              `;
+              card.appendChild(div);
+            });
+          }
+          details.appendChild(card);
         });
         feedEl.appendChild(details);
       });
