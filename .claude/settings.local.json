@@ -5,7 +5,15 @@
       "Write",
       "Task",
       "WebSearch",
-      "WebFetch"
+      "WebFetch",
+      "Bash(find \"C:\\\\Users\\\\user\" -maxdepth 3 -iname \"*plugin*\" 2>/dev/null | grep -v node_modules)",
+      "Bash(cat \"C:\\\\Users\\\\user\\\\.claude\\\\settings.json\" 2>/dev/null)",
+      "Bash(claude --version)",
+      "Bash(claude plugin *)",
+      "Bash(git -C .claude/worktrees/automation-and-agent-rework branch --show-current)",
+      "Bash(git -C .claude/worktrees/automation-and-agent-rework status)",
+      "Bash(git -C .claude/worktrees/automation-and-agent-rework log --oneline -15)",
+      "Bash(powershell.exe -NoProfile -Command \"Get-ScheduledTask -TaskName 'AI투자오피스-*' -ErrorAction SilentlyContinue | Select-Object TaskName,State\")"
     ]
   }
 }

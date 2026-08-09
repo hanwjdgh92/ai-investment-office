@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OFFICE_DIR = ROOT / "office"
-RUN_HOURLY_PS1 = ROOT / "scripts" / "run_hourly.ps1"
+RUN_SCHEDULED_ANALYSIS_PS1 = ROOT / "scripts" / "run_scheduled_analysis.ps1"
 
 _analysis_process: subprocess.Popen | None = None
 
@@ -76,7 +76,7 @@ class OfficeHandler(BaseHTTPRequestHandler):
             status, message = 409, "이미 분석이 실행 중입니다."
         else:
             _analysis_process = subprocess.Popen(
-                ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(RUN_HOURLY_PS1)],
+                ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(RUN_SCHEDULED_ANALYSIS_PS1)],
                 cwd=ROOT,
                 creationflags=subprocess.CREATE_NO_WINDOW,
             )

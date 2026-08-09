@@ -6,6 +6,14 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";
 
 Set-Location $ProjectRoot
 
+# ponytail: 전체분석(run_scheduled_analysis.ps1)이 최대 55분 돌 수 있어, 매시간 도는 이 스크립트와
+# 같은 data/*.json·office/index.html을 동시에 쓸 수 있다. 전체분석이 만든 락 파일이 있으면 이번 회차는 건너뛴다.
+$LockFile = Join-Path $ProjectRoot "logs\.scheduled_analysis.lock"
+if (Test-Path $LockFile) {
+    Write-Output "건너뜀: 전체분석 실행 중 (락 파일 존재: $LockFile)"
+    exit 0
+}
+
 $hasError = $false
 $pyScripts = @("fetch_crypto.py", "fetch_stocks_kr.py", "fetch_stocks_us.py", "fetch_macro.py", "generate_office.py")
 foreach ($script in $pyScripts) {
