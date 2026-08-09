@@ -150,8 +150,8 @@ EMPLOYEES = [
         "emoji": "🎯",
         "color": "#dcdcdc",
         "team": "TRADING",
-        "placeholder": True,
-        "placeholder_text": "분석과 논쟁을 진입가·목표가·손절가·포지션 크기로 숫자화하는 성격. 2단계(매매 시그널 생성)에서 합류 예정",
+        "report_sections": ["Trigger - 매매 시그널 생성"],
+        "raw_data_glob": "crypto_*.json",
     },
     {
         "id": "maverick",
@@ -160,8 +160,8 @@ EMPLOYEES = [
         "emoji": "🦉",
         "color": "#e6e0d4",
         "team": "RISK MGMT",
-        "placeholder": True,
-        "placeholder_text": "\"왜 이렇게 소심해? 더 크게 먹을 수 있는데\" — 놓친 상승 기회도 리스크라고 주장하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정",
+        "report_sections": ["Maverick - 공격적 리스크 검토"],
+        "raw_data_glob": None,
     },
     {
         "id": "guardian",
@@ -170,8 +170,8 @@ EMPLOYEES = [
         "emoji": "🛡️",
         "color": "#e6e0d4",
         "team": "RISK MGMT",
-        "placeholder": True,
-        "placeholder_text": "\"그러다 다 잃는다\" — 뭐든 최악의 시나리오부터 확인하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정",
+        "report_sections": ["Guardian - 보수적 리스크 검토"],
+        "raw_data_glob": None,
     },
     {
         "id": "balance",
@@ -180,8 +180,8 @@ EMPLOYEES = [
         "emoji": "⚖️",
         "color": "#e6e0d4",
         "team": "RISK MGMT",
-        "placeholder": True,
-        "placeholder_text": "Maverick과 Guardian을 저울질해 현실적인 중간 지점을 찾는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정",
+        "report_sections": ["Balance - 중립 리스크 검토"],
+        "raw_data_glob": None,
     },
     {
         "id": "chief-strategist",

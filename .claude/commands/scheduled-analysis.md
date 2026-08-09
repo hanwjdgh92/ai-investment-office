@@ -28,9 +28,17 @@ description: (자동화용) 데이터 수집 + 애널리스트팀·리서치팀�
    - 국내주식 데스크: `chart`/`ledger`/`mood` 결과 → `anchor`에게 전달해 종합
    - 해외주식 데스크: `trend`/`vault`/`pulse` 결과 → `compass`에게 전달해 종합
 
-4. **PM**: 2번의 9개 분석 결과와 3번의 리서치 종합 결과(node/anchor/compass 3개)를 `chief-strategist` 서브에이전트에게 전달해 종합 리포트를 `reports/YYYY-MM-DD.md`로 작성(또는 갱신)하게 합니다.
+4. **크립토 매매 시그널 (2단계, 파일럿)**: 3번에서 나온 `node`의 리서치 종합 결과를 `trigger`에게
+   전달해 코인별 진입가·목표가·손절가·포지션 크기를 생성합니다. 그 결과를 `maverick`과 `guardian`에게
+   각각 전달해 병렬로 리스크 검토를 받습니다(둘은 서로 독립적이므로 병렬 호출 가능). 마지막으로
+   `trigger`/`maverick`/`guardian` 결과를 모두 `balance`에게 전달해 최종 권고로 저울질합니다.
+   국내주식/해외주식 데스크는 이 단계가 없습니다(크립토만 파일럿).
 
-5. `python scripts\generate_office.py`를 실행해 `office\index.html` 스냅샷도 최신 상태로 갱신합니다.
+5. **PM**: 2번의 9개 분석 결과와 3번의 리서치 종합 결과(node/anchor/compass 3개), 4번의 크립토 매매
+   시그널 결과(trigger/maverick/guardian/balance 4개)를 `chief-strategist` 서브에이전트에게 전달해
+   종합 리포트를 `reports/YYYY-MM-DD.md`로 작성(또는 갱신)하게 합니다.
 
-6. 브라우저는 열지 않습니다. 완료되면 생성/갱신된 리포트 경로와 핵심 요약을 짧게 출력하고 종료하세요.
+6. `python scripts\generate_office.py`를 실행해 `office\index.html` 스냅샷도 최신 상태로 갱신합니다.
+
+7. 브라우저는 열지 않습니다. 완료되면 생성/갱신된 리포트 경로와 핵심 요약을 짧게 출력하고 종료하세요.
    중간에 예산 문제로 일부만 완료했다면, 어디까지 완료했는지도 함께 출력하세요.
