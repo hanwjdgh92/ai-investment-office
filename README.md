@@ -6,8 +6,8 @@ PC 상에서 실행되는 AI 에이전트 기반 투자 지원 시스템입니�
 
 - [x] **1단계 — 정보 수집 & 추천 리포트** (완료)
   암호화폐(업비트/바이빗)·국내주식·해외주식 데이터를 수집하고, 자산군별 데스크(크립토/국내주식/해외주식)마다
-  애널리스트 3명 + 리서치 종합 1명을 두고 PM이 종합하는 총 13명의 AI "직원"이 분석해 매일 참고용
-  리포트를 생성합니다.
+  애널리스트 3명 + 리서치 종합 1명을 두고 PM이 종합하는 AI "직원"이 분석해 매일 참고용
+  리포트를 생성합니다. (13명 — 2단계 크립토 파일럿까지 합치면 총 17명입니다)
 - [ ] **2단계 — 매매 시그널 생성 (크립토 파일럿)** (현재 단계)
   크립토 데스크에 한해 Trigger(시그널 생성)와 Maverick/Guardian/Balance(리스크 검토)가 코인별
   진입가·목표가·손절가·포지션 크기(총자본 대비 %)를 산출합니다. **실제 주문은 100% 사람이 거래소
@@ -35,9 +35,14 @@ PC 상에서 실행되는 AI 에이전트 기반 투자 지원 시스템입니�
 | ANALYSTS(해외주식) | Pulse | 해외주식 뉴스·심리 | `.claude/agents/pulse.md` |
 | RESEARCH(해외주식) | Compass | 해외주식 리서치 종합 | `.claude/agents/compass.md` |
 | PM OFFICE | The Boss | 종합 리포트 작성 (포트폴리오 매니저) | `.claude/agents/chief-strategist.md` |
+| TRADING(크립토) | Trigger | 크립토 매매 시그널 생성 (진입가·목표가·손절가·포지션 크기) | `.claude/agents/trigger.md` |
+| RISK MGMT(크립토) | Maverick | 크립토 리스크 검토 (공격적 관점) | `.claude/agents/maverick.md` |
+| RISK MGMT(크립토) | Guardian | 크립토 리스크 검토 (보수적 관점) | `.claude/agents/guardian.md` |
+| RISK MGMT(크립토) | Balance | 크립토 리스크 검토 종합 (중립, 최종 권고) | `.claude/agents/balance.md` |
 
-TRADING(Trigger)·RISK MGMT(Maverick/Guardian/Balance) 팀은 오피스 화면에 자리만 마련되어 있고, 2단계(매매
-시그널)가 실제로 구축되면 합류합니다.
+TRADING(Trigger)·RISK MGMT(Maverick/Guardian/Balance) 팀은 2단계(크립토 파일럿)에서 실제로 구축되어
+합류했습니다. Trigger가 코인별 매매 시그널을 산출하면 Maverick(공격적)·Guardian(보수적)이 검토하고
+Balance가 저울질해 최종 권고로 정리합니다.
 
 데이터 수집(가격/거래량 등 정확한 숫자)은 Python 스크립트가 담당하고, 뉴스 해석·요약·종합 판단은
 Claude Code 서브에이전트가 담당합니다. 숫자는 코드로, 판단은 AI로 — 라는 원칙입니다.
