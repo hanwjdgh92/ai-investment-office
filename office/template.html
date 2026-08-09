@@ -254,6 +254,27 @@
     float: right; border: none; background: var(--bg-bottom); border-radius: 999px;
     width: 28px; height: 28px; cursor: pointer; font-size: 0.9rem;
   }
+  .watchlist-toggle-btn {
+    border: 1px solid var(--border); border-radius: 999px; padding: 10px 16px; font-size: 0.85rem; font-weight: 600;
+    background: transparent; color: var(--text-main); cursor: pointer;
+  }
+  .watchlist-panel {
+    max-width: 1180px; margin: 0 auto 20px; background: var(--panel-bg); border: 1px solid var(--border);
+    border-radius: 20px; padding: 18px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+    backdrop-filter: blur(6px); box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+  .watchlist-panel[hidden] { display: none; }
+  @media (max-width: 860px) { .watchlist-panel { grid-template-columns: 1fr; } }
+  .watchlist-group-title { font-size: 0.78rem; font-weight: 700; color: var(--text-sub); margin-bottom: 8px; }
+  .watchlist-add-row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .watchlist-input { flex: 1; min-width: 0; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-bottom); color: var(--text-main); font-size: 0.82rem; }
+  .watchlist-add-btn { border: none; border-radius: 999px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; background: var(--accent); color: white; cursor: pointer; }
+  .watchlist-add-btn:disabled, .watchlist-input:disabled { opacity: 0.5; cursor: default; }
+  .watchlist-error { color: #e0574f; font-size: 0.74rem; min-height: 1em; margin-bottom: 6px; }
+  .watchlist-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .watchlist-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-bottom); border: 1px solid var(--border); border-radius: 999px; padding: 3px 6px 3px 10px; font-size: 0.76rem; }
+  .watchlist-chip button { border: none; background: none; cursor: pointer; color: var(--text-sub); font-size: 0.8rem; padding: 0 2px; }
+  .watchlist-static-note { grid-column: 1 / -1; color: var(--text-sub); font-size: 0.8rem; }
 </style>
 </head>
 <body>
@@ -263,8 +284,44 @@
       <h1 id="office-title">나의 AI 투자 오피스</h1>
       <div class="meta" id="office-meta">불러오는 중...</div>
     </div>
-    <button id="run-now-btn" class="run-now-btn">지금 분석 받기</button>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button id="watchlist-toggle-btn" class="watchlist-toggle-btn" type="button">⚙ 관심종목 관리</button>
+      <button id="run-now-btn" class="run-now-btn">지금 분석 받기</button>
+    </div>
   </header>
+
+  <section class="watchlist-panel" id="watchlist-panel" hidden>
+    <div class="watchlist-group" data-type="crypto">
+      <div class="watchlist-group-title">크립토 (심볼, 예: SOL)</div>
+      <div class="watchlist-add-row">
+        <input class="watchlist-input" type="text" placeholder="심볼 (예: SOL)" disabled>
+        <button class="watchlist-add-btn" type="button" disabled>추가</button>
+      </div>
+      <div class="watchlist-error"></div>
+      <div class="watchlist-chips"></div>
+    </div>
+    <div class="watchlist-group" data-type="stocks_kr">
+      <div class="watchlist-group-title">국내주식 (6자리 코드, 예: 005930)</div>
+      <div class="watchlist-add-row">
+        <input class="watchlist-input" type="text" placeholder="코드 (예: 005930)" disabled>
+        <button class="watchlist-add-btn" type="button" disabled>추가</button>
+      </div>
+      <div class="watchlist-error"></div>
+      <div class="watchlist-chips"></div>
+    </div>
+    <div class="watchlist-group" data-type="stocks_us">
+      <div class="watchlist-group-title">해외주식 (티커, 예: TSLA)</div>
+      <div class="watchlist-add-row">
+        <input class="watchlist-input" type="text" placeholder="티커 (예: TSLA)" disabled>
+        <button class="watchlist-add-btn" type="button" disabled>추가</button>
+      </div>
+      <div class="watchlist-error"></div>
+      <div class="watchlist-chips"></div>
+    </div>
+    <div class="watchlist-static-note" id="watchlist-static-note">
+      ⚠ 라이브 뷰어(launch_live_office.bat 실행 후 localhost:8787)에서만 사용할 수 있습니다.
+    </div>
+  </section>
 
   <div class="layout">
     <main class="office-map" id="office-map"></main>
@@ -541,6 +598,99 @@
         else pollLive(); // 즉시 한 번 폴링해서 analysisRunning 상태 반영
       })
       .catch(() => { runBtn.textContent = '실시간 서버에서만 사용 가능합니다'; setTimeout(() => { runBtn.textContent = RUN_BTN_DEFAULT; runBtn.disabled = false; }, 3000); });
+  });
+
+  const watchlistToggleBtn = document.getElementById('watchlist-toggle-btn');
+  const watchlistPanel = document.getElementById('watchlist-panel');
+  const watchlistStaticNote = document.getElementById('watchlist-static-note');
+  const WATCHLIST_TYPES = ['crypto', 'stocks_kr', 'stocks_us'];
+  const WATCHLIST_ID_FIELD = { crypto: 'symbol', stocks_kr: 'code', stocks_us: 'ticker' };
+  let watchlistLoaded = false;
+
+  watchlistToggleBtn.addEventListener('click', () => {
+    const willOpen = watchlistPanel.hidden;
+    watchlistPanel.hidden = !willOpen;
+    if (willOpen && !watchlistLoaded) loadWatchlist();
+  });
+
+  function setWatchlistInputsEnabled(enabled) {
+    WATCHLIST_TYPES.forEach(type => {
+      const group = document.querySelector(`.watchlist-group[data-type="${type}"]`);
+      group.querySelector('.watchlist-input').disabled = !enabled;
+      group.querySelector('.watchlist-add-btn').disabled = !enabled;
+    });
+  }
+
+  function renderChips(type, items) {
+    const chipsEl = document.querySelector(`.watchlist-group[data-type="${type}"] .watchlist-chips`);
+    const idField = WATCHLIST_ID_FIELD[type];
+    chipsEl.innerHTML = '';
+    items.forEach(item => {
+      const chip = document.createElement('span');
+      chip.className = 'watchlist-chip';
+      chip.innerHTML = `${item.name || item.symbol}<button type="button">✕</button>`;
+      chip.querySelector('button').addEventListener('click', () => deleteWatchlistItem(type, item[idField]));
+      chipsEl.appendChild(chip);
+    });
+  }
+
+  function loadWatchlist() {
+    fetch('/api/watchlist', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then(data => {
+        watchlistLoaded = true;
+        watchlistStaticNote.hidden = true;
+        setWatchlistInputsEnabled(true);
+        WATCHLIST_TYPES.forEach(type => renderChips(type, data[type] || []));
+      })
+      .catch(() => {
+        watchlistStaticNote.hidden = false;
+        setWatchlistInputsEnabled(false);
+      });
+  }
+
+  function addWatchlistItem(type) {
+    const group = document.querySelector(`.watchlist-group[data-type="${type}"]`);
+    const input = group.querySelector('.watchlist-input');
+    const btn = group.querySelector('.watchlist-add-btn');
+    const errorEl = group.querySelector('.watchlist-error');
+    const symbol = input.value.trim();
+    errorEl.textContent = '';
+    if (!symbol) return;
+    btn.disabled = true;
+    fetch('/api/watchlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, symbol }),
+    })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        btn.disabled = false;
+        if (!ok) { errorEl.textContent = data.error || '추가 실패'; return; }
+        input.value = '';
+        errorEl.textContent = data.warning || '';
+        loadWatchlist();
+        pollLive();
+      })
+      .catch(() => { btn.disabled = false; errorEl.textContent = '요청 실패'; });
+  }
+
+  function deleteWatchlistItem(type, symbol) {
+    fetch('/api/watchlist', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, symbol }),
+    })
+      .then(() => { loadWatchlist(); pollLive(); })
+      .catch(() => {});
+  }
+
+  WATCHLIST_TYPES.forEach(type => {
+    const group = document.querySelector(`.watchlist-group[data-type="${type}"]`);
+    group.querySelector('.watchlist-add-btn').addEventListener('click', () => addWatchlistItem(type));
+    group.querySelector('.watchlist-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addWatchlistItem(type);
+    });
   });
 </script>
 </body>

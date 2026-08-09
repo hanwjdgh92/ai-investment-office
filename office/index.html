@@ -254,6 +254,27 @@
     float: right; border: none; background: var(--bg-bottom); border-radius: 999px;
     width: 28px; height: 28px; cursor: pointer; font-size: 0.9rem;
   }
+  .watchlist-toggle-btn {
+    border: 1px solid var(--border); border-radius: 999px; padding: 10px 16px; font-size: 0.85rem; font-weight: 600;
+    background: transparent; color: var(--text-main); cursor: pointer;
+  }
+  .watchlist-panel {
+    max-width: 1180px; margin: 0 auto 20px; background: var(--panel-bg); border: 1px solid var(--border);
+    border-radius: 20px; padding: 18px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+    backdrop-filter: blur(6px); box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+  .watchlist-panel[hidden] { display: none; }
+  @media (max-width: 860px) { .watchlist-panel { grid-template-columns: 1fr; } }
+  .watchlist-group-title { font-size: 0.78rem; font-weight: 700; color: var(--text-sub); margin-bottom: 8px; }
+  .watchlist-add-row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .watchlist-input { flex: 1; min-width: 0; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-bottom); color: var(--text-main); font-size: 0.82rem; }
+  .watchlist-add-btn { border: none; border-radius: 999px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; background: var(--accent); color: white; cursor: pointer; }
+  .watchlist-add-btn:disabled, .watchlist-input:disabled { opacity: 0.5; cursor: default; }
+  .watchlist-error { color: #e0574f; font-size: 0.74rem; min-height: 1em; margin-bottom: 6px; }
+  .watchlist-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .watchlist-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-bottom); border: 1px solid var(--border); border-radius: 999px; padding: 3px 6px 3px 10px; font-size: 0.76rem; }
+  .watchlist-chip button { border: none; background: none; cursor: pointer; color: var(--text-sub); font-size: 0.8rem; padding: 0 2px; }
+  .watchlist-static-note { grid-column: 1 / -1; color: var(--text-sub); font-size: 0.8rem; }
 </style>
 </head>
 <body>
@@ -263,8 +284,44 @@
       <h1 id="office-title">나의 AI 투자 오피스</h1>
       <div class="meta" id="office-meta">불러오는 중...</div>
     </div>
-    <button id="run-now-btn" class="run-now-btn">지금 분석 받기</button>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button id="watchlist-toggle-btn" class="watchlist-toggle-btn" type="button">⚙ 관심종목 관리</button>
+      <button id="run-now-btn" class="run-now-btn">지금 분석 받기</button>
+    </div>
   </header>
+
+  <section class="watchlist-panel" id="watchlist-panel" hidden>
+    <div class="watchlist-group" data-type="crypto">
+      <div class="watchlist-group-title">크립토 (심볼, 예: SOL)</div>
+      <div class="watchlist-add-row">
+        <input class="watchlist-input" type="text" placeholder="심볼 (예: SOL)" disabled>
+        <button class="watchlist-add-btn" type="button" disabled>추가</button>
+      </div>
+      <div class="watchlist-error"></div>
+      <div class="watchlist-chips"></div>
+    </div>
+    <div class="watchlist-group" data-type="stocks_kr">
+      <div class="watchlist-group-title">국내주식 (6자리 코드, 예: 005930)</div>
+      <div class="watchlist-add-row">
+        <input class="watchlist-input" type="text" placeholder="코드 (예: 005930)" disabled>
+        <button class="watchlist-add-btn" type="button" disabled>추가</button>
+      </div>
+      <div class="watchlist-error"></div>
+      <div class="watchlist-chips"></div>
+    </div>
+    <div class="watchlist-group" data-type="stocks_us">
+      <div class="watchlist-group-title">해외주식 (티커, 예: TSLA)</div>
+      <div class="watchlist-add-row">
+        <input class="watchlist-input" type="text" placeholder="티커 (예: TSLA)" disabled>
+        <button class="watchlist-add-btn" type="button" disabled>추가</button>
+      </div>
+      <div class="watchlist-error"></div>
+      <div class="watchlist-chips"></div>
+    </div>
+    <div class="watchlist-static-note" id="watchlist-static-note">
+      ⚠ 라이브 뷰어(launch_live_office.bat 실행 후 localhost:8787)에서만 사용할 수 있습니다.
+    </div>
+  </section>
 
   <div class="layout">
     <main class="office-map" id="office-map"></main>
@@ -284,7 +341,7 @@
 </div>
 
 <script>
-  window.__OFFICE_DATA__ = {"title": "나의 AI 투자 오피스", "generatedAt": "2026-08-04 20:11", "employees": [{"id": "candle", "name": "Candle", "role": "암호화폐 기술적 분석", "emoji": "🕯️", "color": "#ffd9ec", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 89,324,000원(-1.72%), RSI14 27.85 과매도. ETH: 2,627,000원(-2.6%), RSI14 36.71 중립."}, {"id": "vibes", "name": "Vibes", "role": "암호화폐 시장심리", "emoji": "🌊", "color": "#ffe9d9", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "Coldcard 지갑 해킹(8,900만달러규모)으로 보안신뢰훼손, 공포탐욕지수 중립~공포(25~44), 코스피급락·미국채금리하락으로 위험회피, DXY는 보합."}, {"id": "chain", "name": "Chain", "role": "암호화폐 뉴스·이슈", "emoji": "⛓️", "color": "#fff0c2", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: Coldcard 시드결함 4차공격, 누적피해8,800만달러+, 비트코인ETF 순유출 지속보도. ETH: 7월 이더리움ETF 순매수3.65억달러(2025년10월이후 최대)로 자금유입우위, Arthur Hayes재매수, Glamsterdam하드포크 예정."}, {"id": "proto", "name": "Proto", "role": "암호화폐 펀더멘털", "emoji": "🧬", "color": "#e0f7e9", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 유통량95%+채굴완료, 기관ETF자산1,300~2,000억달러, 신규채굴대비2.8배속도 기관매수. ETH: 스테이킹비율32.5%사상최고, L2TVL380억달러, ETF누적유입110억달러+."}, {"id": "ape", "name": "Ape", "role": "크립토 강세 관점", "emoji": "🐵", "color": "#ffe1e1", "team": "크립토", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: RSI14 27.85 과매도(반등기대), 유통량95%+채굴완료, 기관ETF자산확대, 신규채굴대비2.8배속도 기관매수. ETH: ETF순매수3.65억달러(최대), 스테이킹비율32.5%사상최고, L2TVL380억달러."}, {"id": "fud", "name": "Fud", "role": "크립토 약세 관점", "emoji": "❄️", "color": "#e1e6ff", "team": "크립토", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: -1.72%하락, Coldcard익스플로잇(누적8,800만달러+)으로 보안신뢰훼손, 파생상품 미결제약정급증, 공포탐욕지수 중립~공포, 비트코인ETF순유출지속. ETH: -2.6%하락, 연간순발행률 자료편차로 불확실성."}, {"id": "node", "name": "Node", "role": "크립토 리서치 종합", "emoji": "🧑‍🔬", "color": "#eae1ff", "team": "크립토", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: RSI과매도로 기술적반등여지 있으나 Coldcard보안이슈로 단기심리 취약, 장기수급구조(기관ETF·트레저리)는 견고. ETH: ETF자금유입·스테이킹비율 등 온체인지표 개선세이나 가격은 하락, 순발행률 불확실성 존재."}, {"id": "chart", "name": "Chart", "role": "국내주식 기술적 분석", "emoji": "📈", "color": "#d9f2ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: 239,500원(-8.76%), 5일선상회·20일60일선하회, RSI14 46.84중립. SK하이닉스: 1,567,000원(-8.79%), 5일선상회·20일60일선하회, RSI14 42.98중립. 둘다 직전거래일 급등후 급락."}, {"id": "scoop", "name": "Scoop", "role": "국내주식 뉴스·이슈", "emoji": "📰", "color": "#d9ffe4", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자·SK하이닉스 전일급등 차익실현으로 8%대급락. 반도체업황·AI투자지속성우려, 엔캐리청산우려, 중국CXMT경쟁우려, HBM경쟁이슈."}, {"id": "mood", "name": "Mood", "role": "국내주식 시장심리", "emoji": "🌙", "color": "#f0e0ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "코스피-5.12%급락, 외국인·기관순매도(합산약4.7조원) vs 개인2.5조원순매수. 반도체4종목이 코스피시총 약60%차지하는 쏠림구조. 코스닥+5%대반등."}, {"id": "ledger", "name": "Ledger", "role": "국내주식 펀더멘털", "emoji": "📒", "color": "#cfe8ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: PER19.36/PBR3.33, 2분기영업이익89.5조원역대최대(+56%). SK하이닉스: PER15.14/PBR6.76, 2분기영업이익60.5조원역대최대(+557%,영업이익률76%) 단 컨센서스하회."}, {"id": "rally", "name": "Rally", "role": "국내주식 강세 관점", "emoji": "🐂", "color": "#ffe1e1", "team": "국내주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자·SK하이닉스 급락에도 5일선상회, RSI중립권(과매도아님). 둘다 2분기 역대최대 영업이익. 개인2.5조원순매수, 코스닥+5%반등."}, {"id": "slump", "name": "Slump", "role": "국내주식 약세 관점", "emoji": "🐻", "color": "#e1e6ff", "team": "국내주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자·SK하이닉스 -8%대급락, MA20·MA60동반하회. 반도체업황우려, 엔캐리청산우려, 중국경쟁심화. SK하이닉스PBR6.76배 밸류부담, 컨센서스하회. 코스피 외국인·기관순매도, 반도체쏠림구조 취약."}, {"id": "anchor", "name": "Anchor", "role": "국내주식 리서치 종합", "emoji": "⚓", "color": "#eae1ff", "team": "국내주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: 실적펀더멘털 견조하나 업황·경쟁리스크가 급락 원인, 밸류에이션재평가압력 지속가능. SK하이닉스: 압도적 실적에도 컨센서스하회·PBR부담으로 하락폭 확대, 시장눈높이가 높아진 국면. 코스피전반: 외국인·기관매도를 개인이 일부받아냄, 반도체쏠림구조 변동성노출, 다만 미국환경우호적·코스닥반등으로 추세전환보다 단기조정 가능성."}, {"id": "trend", "name": "Trend", "role": "해외주식 기술적 분석", "emoji": "📊", "color": "#ffe0d0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 308.91달러(-7.35%), MA5·MA20이탈, RSI14 45.08중립. NVDA: 200.75달러(+2.93%), RSI14 47.75중립, 저점반등흐름."}, {"id": "herald", "name": "Herald", "role": "해외주식 뉴스·이슈", "emoji": "📯", "color": "#e0ffe0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 매출·EPS컨센서스상회했으나 가이던스둔화로 급락. NVDA: 하이퍼스케일러capex가이던스견조로 AI수요기대회복, 알리바바수출규제우회이슈(확인필요)."}, {"id": "pulse", "name": "Pulse", "role": "해외주식 시장심리", "emoji": "💓", "color": "#ffd0e0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "FOMC금리동결+피벗기대, S&P500기업85%실적상회(순이익성장률47%), 골드만삭스리스크어피타이트99백분위과열경고, \"8~9월최악의시기\"계절적약세경고."}, {"id": "vault", "name": "Vault", "role": "해외주식 펀더멘털", "emoji": "🏦", "color": "#d0e0ff", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: PER35.5/PBR42.0, 시총4.54조달러, 실적서프라이즈. NVDA: PER30.8/PBR24.9, 시총4.86조달러, 52주고저중간구간."}, {"id": "surge", "name": "Surge", "role": "해외주식 강세 관점", "emoji": "🚀", "color": "#ffe1e1", "team": "해외주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL 어닝서프라이즈. NVDA +2.93%저점반등, 하이퍼스케일러capex견조. 시장전반 FOMC금리동결+피벗기대, S&P500실적호조."}, {"id": "drag", "name": "Drag", "role": "해외주식 약세 관점", "emoji": "🪂", "color": "#e1e6ff", "team": "해외주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL -7.35% MA5·MA20이탈, 가이던스하회, 고밸류에이션(PER35.5)에 금리부담. NVDA MA20·MA60여전히하회, 수출규제이슈. 시장전반 리스크어피타이트과열경고, 계절적약세경고."}, {"id": "compass", "name": "Compass", "role": "해외주식 리서치 종합", "emoji": "🧭", "color": "#eae1ff", "team": "해외주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 어닝서프라이즈에도 가이던스하회·고밸류에이션·금리환경으로 급락, 실적의 질이 헤드라인보다 중요해진 국면. NVDA: 기술적반등이나 중기추세미확인, 방향성확인전까지 중립. 시장전반: 유동성환경우호적이나 밸류에이션·계절성측면 경계필요."}, {"id": "trigger", "name": "Trigger", "role": "매매 시그널 생성 (Execution Specialist)", "emoji": "🎯", "color": "#dcdcdc", "team": "TRADING", "status": "locked", "statusText": "분석과 논쟁을 진입가·목표가·손절가·포지션 크기로 숫자화하는 성격. 2단계(매매 시그널 생성)에서 합류 예정", "fullText": "분석과 논쟁을 진입가·목표가·손절가·포지션 크기로 숫자화하는 성격. 2단계(매매 시그널 생성)에서 합류 예정", "placeholder": true}, {"id": "maverick", "name": "Maverick", "role": "공격적 리스크 검토 (Aggressive Risk)", "emoji": "🦉", "color": "#e6e0d4", "team": "RISK MGMT", "status": "locked", "statusText": "\"왜 이렇게 소심해? 더 크게 먹을 수 있는데\" — 놓친 상승 기회도 리스크라고 주장하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "fullText": "\"왜 이렇게 소심해? 더 크게 먹을 수 있는데\" — 놓친 상승 기회도 리스크라고 주장하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "placeholder": true}, {"id": "guardian", "name": "Guardian", "role": "보수적 리스크 검토 (Conservative Risk)", "emoji": "🛡️", "color": "#e6e0d4", "team": "RISK MGMT", "status": "locked", "statusText": "\"그러다 다 잃는다\" — 뭐든 최악의 시나리오부터 확인하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "fullText": "\"그러다 다 잃는다\" — 뭐든 최악의 시나리오부터 확인하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "placeholder": true}, {"id": "balance", "name": "Balance", "role": "중립 리스크 검토 (Neutral Risk)", "emoji": "⚖️", "color": "#e6e0d4", "team": "RISK MGMT", "status": "locked", "statusText": "Maverick과 Guardian을 저울질해 현실적인 중간 지점을 찾는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "fullText": "Maverick과 Guardian을 저울질해 현실적인 중간 지점을 찾는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "placeholder": true}, {"id": "chief-strategist", "name": "The Boss", "role": "종합 리포트 작성 (포트폴리오 매니저)", "emoji": "🧑‍💼", "color": "#e8e0ff", "team": "PM", "subteam": null, "status": "done", "statusText": "리포트 작성 완료", "fullText": "코스피는 -5.12%(6,257.45) 급락하며 삼성전자(-8.76%)·SK하이닉스(-8.79%)가 전일 급등분을 대거 반납했고, 외국인·기관 순매도(합산 약 4.7조원)를 개인 2.5조원 순매수가 일부 받아내는 모습이었습니다. 원/달러 환율은 1,427.13원(+0.46%)으로 상승했으나 미 10년물 금리(4.673%, -1.52%)는 하락하고 달러인덱스(99.781, -0.02%)는 보합에 머물러, 국내 반도체 대형주 쏠림에 따른 국지적 위험회피가 두드러진 하루였습니다. 해외증시는 7/31 기준 S&P500이 +0.7%로 견조했지만 AAPL은 가이던스 둔화로 -7.35% 급락했고 NVDA는 하이퍼스케일러 capex 기대에 +2.93% 반등하는 등 종목별 온도차가 컸습니다. 암호화폐는 Coldcard 지갑 익스플로잇 사태(누적 피해 8,800만~8,900만달러)로 보안 신뢰가 훼손되며 BTC(-1.72%, RSI 과매도)·ETH(-2.6%) 모두 약세였으나, ETH는 ETF 순매수·스테이킹비율 등 중장기 자금유입 지표가 개선세를 보였습니다. 전반적으로 국내 반도체발 위험회피, 애플 개별주 조정, 크립토 보안이슈발 신뢰훼손이 겹쳤으나 미 금리 하락·달러 보합 등 매크로 환경 자체는 자산군별로 엇갈린 신호를 보였습니다.\n\n- Node(크립토): BTC RSI 과매도로 기술적 반등 여지는 있으나 Coldcard 지갑 익스플로잇(누적 8,800만달러+)이 콜드스토리지 신뢰를 훼손해 단기 심리가 취약한 상태.\n- Node(크립토): ETH는 ETF 순매수·스테이킹비율 등 온체인 지표가 개선세이나 가격은 오히려 하락, 순발행률 수치의 자료 편차로 인한 불확실성도 존재.\n- Anchor(국내주식): 반도체 4종목이 코스피 시총의 약 60%를 차지하는 쏠림 구조상, 삼성전자·SK하이닉스 동반 급락이 지수 전체 변동성을 키우는 취약점.\n- Anchor(국내주식): SK하이닉스는 역대최대 영업이익에도 컨센서스 하회와 PBR 6.76배의 밸류에이션 부담이 겹쳐 하락폭이 확대된 점에 유의.\n- Compass(해외주식): AAPL은 어닝서프라이즈에도 가이던스 하회·고밸류에이션(PER 35.5)·금리 부담이 겹쳐 급락, NVDA는 중기 추세가 아직 미확인 상태.\n- Compass(해외주식): 골드만삭스 리스크어피타이트 지표 과열경고와 \"8~9월 최악의 시기\" 계절적 약세 경고가 시장 전반의 밸류에이션·변동성 리스크로 상존.\n\n- Node(크립토): BTC 과매도 반등 신호와 Coldcard 보안이슈발 신뢰훼손 중 어느 쪽이 우세할지, 장·단기 시계열에 따라 신호가 엇갈리는 점을 계속 지켜볼 필요.\n- Anchor(국내주식): 삼성전자·SK하이닉스 급락이 전일 급등에 대한 단기 차익실현인지 반도체 밸류에이션 재평가의 시작인지는, 개인·외국인·기관 수급과 코스닥 순환매 여부를 함께 살펴볼 참고 지점.\n- Compass(해외주식): 애플은 실적 자체보다 가이던스·업황 코멘트가 주가에 더 크게 반영된 점이, 엔비디아는 하이퍼스케일러 capex 확대와 수출규제 우회 이슈가 동반되는 점이 관찰 포인트.\n- Compass(해외주식): 시장 전반의 유동성 환경(FOMC 금리동결, 피벗 기대)은 우호적이나 밸류에이션·계절성 측면의 경계감이 공존하는 혼재국면이라는 점."}], "consoleFeed": [{"category": "크립토", "items": [{"team": "크립토", "name": "Candle", "emoji": "🕯️", "time": "22:18", "text": "BTC: 89,324,000원(-1.72%), RSI14 27.85 과매도. ETH: 2,627,000원(-2.6%), RSI14 36.71 중립."}, {"team": "크립토", "name": "Vibes", "emoji": "🌊", "time": "22:18", "text": "Coldcard 지갑 해킹(8,900만달러규모)으로 보안신뢰훼손, 공포탐욕지수 중립~공포(25~44), 코스피급락·미국채금리하락으로 위험회피, DXY는 보합."}, {"team": "크립토", "name": "Chain", "emoji": "⛓️", "time": "22:18", "text": "BTC: Coldcard 시드결함 4차공격, 누적피해8,800만달러+, 비트코인ETF 순유출 지속보도. ETH: 7월 이더리움ETF 순매수3.65억달러(2025년10월이후 최대)로 자금유입우위, Arthur Hayes재매수, Glamsterdam하드포크 예정."}, {"team": "크립토", "name": "Proto", "emoji": "🧬", "time": "22:18", "text": "BTC: 유통량95%+채굴완료, 기관ETF자산1,300~2,000억달러, 신규채굴대비2.8배속도 기관매수. ETH: 스테이킹비율32.5%사상최고, L2TVL380억달러, ETF누적유입110억달러+."}, {"team": "크립토", "name": "Ape", "emoji": "🐵", "time": "22:18", "text": "BTC: RSI14 27.85 과매도(반등기대), 유통량95%+채굴완료, 기관ETF자산확대, 신규채굴대비2.8배속도 기관매수. ETH: ETF순매수3.65억달러(최대), 스테이킹비율32.5%사상최고, L2TVL380억달러."}, {"team": "크립토", "name": "Fud", "emoji": "❄️", "time": "22:18", "text": "BTC: -1.72%하락, Coldcard익스플로잇(누적8,800만달러+)으로 보안신뢰훼손, 파생상품 미결제약정급증, 공포탐욕지수 중립~공포, 비트코인ETF순유출지속. ETH: -2.6%하락, 연간순발행률 자료편차로 불확실성."}, {"team": "크립토", "name": "Node", "emoji": "🧑‍🔬", "time": "22:18", "text": "BTC: RSI과매도로 기술적반등여지 있으나 Coldcard보안이슈로 단기심리 취약, 장기수급구조(기관ETF·트레저리)는 견고. ETH: ETF자금유입·스테이킹비율 등 온체인지표 개선세이나 가격은 하락, 순발행률 불확실성 존재."}]}, {"category": "국내주식", "items": [{"team": "국내주식", "name": "Chart", "emoji": "📈", "time": "22:18", "text": "삼성전자: 239,500원(-8.76%), 5일선상회·20일60일선하회, RSI14 46.84중립. SK하이닉스: 1,567,000원(-8.79%), 5일선상회·20일60일선하회, RSI14 42.98중립. 둘다 직전거래일 급등후 급락."}, {"team": "국내주식", "name": "Scoop", "emoji": "📰", "time": "22:18", "text": "삼성전자·SK하이닉스 전일급등 차익실현으로 8%대급락. 반도체업황·AI투자지속성우려, 엔캐리청산우려, 중국CXMT경쟁우려, HBM경쟁이슈."}, {"team": "국내주식", "name": "Mood", "emoji": "🌙", "time": "22:18", "text": "코스피-5.12%급락, 외국인·기관순매도(합산약4.7조원) vs 개인2.5조원순매수. 반도체4종목이 코스피시총 약60%차지하는 쏠림구조. 코스닥+5%대반등."}, {"team": "국내주식", "name": "Ledger", "emoji": "📒", "time": "22:18", "text": "삼성전자: PER19.36/PBR3.33, 2분기영업이익89.5조원역대최대(+56%). SK하이닉스: PER15.14/PBR6.76, 2분기영업이익60.5조원역대최대(+557%,영업이익률76%) 단 컨센서스하회."}, {"team": "국내주식", "name": "Rally", "emoji": "🐂", "time": "22:18", "text": "삼성전자·SK하이닉스 급락에도 5일선상회, RSI중립권(과매도아님). 둘다 2분기 역대최대 영업이익. 개인2.5조원순매수, 코스닥+5%반등."}, {"team": "국내주식", "name": "Slump", "emoji": "🐻", "time": "22:18", "text": "삼성전자·SK하이닉스 -8%대급락, MA20·MA60동반하회. 반도체업황우려, 엔캐리청산우려, 중국경쟁심화. SK하이닉스PBR6.76배 밸류부담, 컨센서스하회. 코스피 외국인·기관순매도, 반도체쏠림구조 취약."}, {"team": "국내주식", "name": "Anchor", "emoji": "⚓", "time": "22:18", "text": "삼성전자: 실적펀더멘털 견조하나 업황·경쟁리스크가 급락 원인, 밸류에이션재평가압력 지속가능. SK하이닉스: 압도적 실적에도 컨센서스하회·PBR부담으로 하락폭 확대, 시장눈높이가 높아진 국면. 코스피전반: 외국인·기관매도를 개인이 일부받아냄, 반도체쏠림구조 변동성노출, 다만 미국환경우호적·코스닥반등으로 추세전환보다 단기조정 가능성."}]}, {"category": "해외주식", "items": [{"team": "해외주식", "name": "Trend", "emoji": "📊", "time": "22:18", "text": "AAPL: 308.91달러(-7.35%), MA5·MA20이탈, RSI14 45.08중립. NVDA: 200.75달러(+2.93%), RSI14 47.75중립, 저점반등흐름."}, {"team": "해외주식", "name": "Herald", "emoji": "📯", "time": "22:18", "text": "AAPL: 매출·EPS컨센서스상회했으나 가이던스둔화로 급락. NVDA: 하이퍼스케일러capex가이던스견조로 AI수요기대회복, 알리바바수출규제우회이슈(확인필요)."}, {"team": "해외주식", "name": "Pulse", "emoji": "💓", "time": "22:18", "text": "FOMC금리동결+피벗기대, S&P500기업85%실적상회(순이익성장률47%), 골드만삭스리스크어피타이트99백분위과열경고, \"8~9월최악의시기\"계절적약세경고."}, {"team": "해외주식", "name": "Vault", "emoji": "🏦", "time": "22:18", "text": "AAPL: PER35.5/PBR42.0, 시총4.54조달러, 실적서프라이즈. NVDA: PER30.8/PBR24.9, 시총4.86조달러, 52주고저중간구간."}, {"team": "해외주식", "name": "Surge", "emoji": "🚀", "time": "22:18", "text": "AAPL 어닝서프라이즈. NVDA +2.93%저점반등, 하이퍼스케일러capex견조. 시장전반 FOMC금리동결+피벗기대, S&P500실적호조."}, {"team": "해외주식", "name": "Drag", "emoji": "🪂", "time": "22:18", "text": "AAPL -7.35% MA5·MA20이탈, 가이던스하회, 고밸류에이션(PER35.5)에 금리부담. NVDA MA20·MA60여전히하회, 수출규제이슈. 시장전반 리스크어피타이트과열경고, 계절적약세경고."}, {"team": "해외주식", "name": "Compass", "emoji": "🧭", "time": "22:18", "text": "AAPL: 어닝서프라이즈에도 가이던스하회·고밸류에이션·금리환경으로 급락, 실적의 질이 헤드라인보다 중요해진 국면. NVDA: 기술적반등이나 중기추세미확인, 방향성확인전까지 중립. 시장전반: 유동성환경우호적이나 밸류에이션·계절성측면 경계필요."}]}, {"category": "PM", "items": [{"team": "PM", "name": "The Boss", "emoji": "🧑‍💼", "time": "22:18", "text": "코스피는 -5.12%(6,257.45) 급락하며 삼성전자(-8.76%)·SK하이닉스(-8.79%)가 전일 급등분을 대거 반납했고, 외국인·기관 순매도(합산 약 4.7조원)를 개인 2.5조원 순매수가 일부 받아내는 모습이었습니다. 원/달러 환율은 1,427.13원(+0.46%)으로 상승했으나 미 10년물 금리(4.673%, -1.52%)는 하락하고 달러인덱스(99.781, -0.02%)는 보합…"}]}]};
+  window.__OFFICE_DATA__ = {"title": "나의 AI 투자 오피스", "generatedAt": "2026-08-09 14:01", "employees": [{"id": "candle", "name": "Candle", "role": "암호화폐 기술적 분석", "emoji": "🕯️", "color": "#ffd9ec", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 89,324,000원(-1.72%), RSI14 27.85 과매도. ETH: 2,627,000원(-2.6%), RSI14 36.71 중립."}, {"id": "vibes", "name": "Vibes", "role": "암호화폐 시장심리", "emoji": "🌊", "color": "#ffe9d9", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "Coldcard 지갑 해킹(8,900만달러규모)으로 보안신뢰훼손, 공포탐욕지수 중립~공포(25~44), 코스피급락·미국채금리하락으로 위험회피, DXY는 보합."}, {"id": "chain", "name": "Chain", "role": "암호화폐 뉴스·이슈", "emoji": "⛓️", "color": "#fff0c2", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: Coldcard 시드결함 4차공격, 누적피해8,800만달러+, 비트코인ETF 순유출 지속보도. ETH: 7월 이더리움ETF 순매수3.65억달러(2025년10월이후 최대)로 자금유입우위, Arthur Hayes재매수, Glamsterdam하드포크 예정."}, {"id": "proto", "name": "Proto", "role": "암호화폐 펀더멘털", "emoji": "🧬", "color": "#e0f7e9", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 유통량95%+채굴완료, 기관ETF자산1,300~2,000억달러, 신규채굴대비2.8배속도 기관매수. ETH: 스테이킹비율32.5%사상최고, L2TVL380억달러, ETF누적유입110억달러+."}, {"id": "ape", "name": "Ape", "role": "크립토 강세 관점", "emoji": "🐵", "color": "#ffe1e1", "team": "크립토", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: RSI14 27.85 과매도(반등기대), 유통량95%+채굴완료, 기관ETF자산확대, 신규채굴대비2.8배속도 기관매수. ETH: ETF순매수3.65억달러(최대), 스테이킹비율32.5%사상최고, L2TVL380억달러."}, {"id": "fud", "name": "Fud", "role": "크립토 약세 관점", "emoji": "❄️", "color": "#e1e6ff", "team": "크립토", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: -1.72%하락, Coldcard익스플로잇(누적8,800만달러+)으로 보안신뢰훼손, 파생상품 미결제약정급증, 공포탐욕지수 중립~공포, 비트코인ETF순유출지속. ETH: -2.6%하락, 연간순발행률 자료편차로 불확실성."}, {"id": "node", "name": "Node", "role": "크립토 리서치 종합", "emoji": "🧑‍🔬", "color": "#eae1ff", "team": "크립토", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: RSI과매도로 기술적반등여지 있으나 Coldcard보안이슈로 단기심리 취약, 장기수급구조(기관ETF·트레저리)는 견고. ETH: ETF자금유입·스테이킹비율 등 온체인지표 개선세이나 가격은 하락, 순발행률 불확실성 존재."}, {"id": "chart", "name": "Chart", "role": "국내주식 기술적 분석", "emoji": "📈", "color": "#d9f2ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: 239,500원(-8.76%), 5일선상회·20일60일선하회, RSI14 46.84중립. SK하이닉스: 1,567,000원(-8.79%), 5일선상회·20일60일선하회, RSI14 42.98중립. 둘다 직전거래일 급등후 급락."}, {"id": "scoop", "name": "Scoop", "role": "국내주식 뉴스·이슈", "emoji": "📰", "color": "#d9ffe4", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자·SK하이닉스 전일급등 차익실현으로 8%대급락. 반도체업황·AI투자지속성우려, 엔캐리청산우려, 중국CXMT경쟁우려, HBM경쟁이슈."}, {"id": "mood", "name": "Mood", "role": "국내주식 시장심리", "emoji": "🌙", "color": "#f0e0ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "코스피-5.12%급락, 외국인·기관순매도(합산약4.7조원) vs 개인2.5조원순매수. 반도체4종목이 코스피시총 약60%차지하는 쏠림구조. 코스닥+5%대반등."}, {"id": "ledger", "name": "Ledger", "role": "국내주식 펀더멘털", "emoji": "📒", "color": "#cfe8ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: PER19.36/PBR3.33, 2분기영업이익89.5조원역대최대(+56%). SK하이닉스: PER15.14/PBR6.76, 2분기영업이익60.5조원역대최대(+557%,영업이익률76%) 단 컨센서스하회."}, {"id": "rally", "name": "Rally", "role": "국내주식 강세 관점", "emoji": "🐂", "color": "#ffe1e1", "team": "국내주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자·SK하이닉스 급락에도 5일선상회, RSI중립권(과매도아님). 둘다 2분기 역대최대 영업이익. 개인2.5조원순매수, 코스닥+5%반등."}, {"id": "slump", "name": "Slump", "role": "국내주식 약세 관점", "emoji": "🐻", "color": "#e1e6ff", "team": "국내주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자·SK하이닉스 -8%대급락, MA20·MA60동반하회. 반도체업황우려, 엔캐리청산우려, 중국경쟁심화. SK하이닉스PBR6.76배 밸류부담, 컨센서스하회. 코스피 외국인·기관순매도, 반도체쏠림구조 취약."}, {"id": "anchor", "name": "Anchor", "role": "국내주식 리서치 종합", "emoji": "⚓", "color": "#eae1ff", "team": "국내주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: 실적펀더멘털 견조하나 업황·경쟁리스크가 급락 원인, 밸류에이션재평가압력 지속가능. SK하이닉스: 압도적 실적에도 컨센서스하회·PBR부담으로 하락폭 확대, 시장눈높이가 높아진 국면. 코스피전반: 외국인·기관매도를 개인이 일부받아냄, 반도체쏠림구조 변동성노출, 다만 미국환경우호적·코스닥반등으로 추세전환보다 단기조정 가능성."}, {"id": "trend", "name": "Trend", "role": "해외주식 기술적 분석", "emoji": "📊", "color": "#ffe0d0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 308.91달러(-7.35%), MA5·MA20이탈, RSI14 45.08중립. NVDA: 200.75달러(+2.93%), RSI14 47.75중립, 저점반등흐름."}, {"id": "herald", "name": "Herald", "role": "해외주식 뉴스·이슈", "emoji": "📯", "color": "#e0ffe0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 매출·EPS컨센서스상회했으나 가이던스둔화로 급락. NVDA: 하이퍼스케일러capex가이던스견조로 AI수요기대회복, 알리바바수출규제우회이슈(확인필요)."}, {"id": "pulse", "name": "Pulse", "role": "해외주식 시장심리", "emoji": "💓", "color": "#ffd0e0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "FOMC금리동결+피벗기대, S&P500기업85%실적상회(순이익성장률47%), 골드만삭스리스크어피타이트99백분위과열경고, \"8~9월최악의시기\"계절적약세경고."}, {"id": "vault", "name": "Vault", "role": "해외주식 펀더멘털", "emoji": "🏦", "color": "#d0e0ff", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: PER35.5/PBR42.0, 시총4.54조달러, 실적서프라이즈. NVDA: PER30.8/PBR24.9, 시총4.86조달러, 52주고저중간구간."}, {"id": "surge", "name": "Surge", "role": "해외주식 강세 관점", "emoji": "🚀", "color": "#ffe1e1", "team": "해외주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL 어닝서프라이즈. NVDA +2.93%저점반등, 하이퍼스케일러capex견조. 시장전반 FOMC금리동결+피벗기대, S&P500실적호조."}, {"id": "drag", "name": "Drag", "role": "해외주식 약세 관점", "emoji": "🪂", "color": "#e1e6ff", "team": "해외주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL -7.35% MA5·MA20이탈, 가이던스하회, 고밸류에이션(PER35.5)에 금리부담. NVDA MA20·MA60여전히하회, 수출규제이슈. 시장전반 리스크어피타이트과열경고, 계절적약세경고."}, {"id": "compass", "name": "Compass", "role": "해외주식 리서치 종합", "emoji": "🧭", "color": "#eae1ff", "team": "해외주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 어닝서프라이즈에도 가이던스하회·고밸류에이션·금리환경으로 급락, 실적의 질이 헤드라인보다 중요해진 국면. NVDA: 기술적반등이나 중기추세미확인, 방향성확인전까지 중립. 시장전반: 유동성환경우호적이나 밸류에이션·계절성측면 경계필요."}, {"id": "trigger", "name": "Trigger", "role": "매매 시그널 생성 (Execution Specialist)", "emoji": "🎯", "color": "#dcdcdc", "team": "TRADING", "status": "locked", "statusText": "분석과 논쟁을 진입가·목표가·손절가·포지션 크기로 숫자화하는 성격. 2단계(매매 시그널 생성)에서 합류 예정", "fullText": "분석과 논쟁을 진입가·목표가·손절가·포지션 크기로 숫자화하는 성격. 2단계(매매 시그널 생성)에서 합류 예정", "placeholder": true}, {"id": "maverick", "name": "Maverick", "role": "공격적 리스크 검토 (Aggressive Risk)", "emoji": "🦉", "color": "#e6e0d4", "team": "RISK MGMT", "status": "locked", "statusText": "\"왜 이렇게 소심해? 더 크게 먹을 수 있는데\" — 놓친 상승 기회도 리스크라고 주장하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "fullText": "\"왜 이렇게 소심해? 더 크게 먹을 수 있는데\" — 놓친 상승 기회도 리스크라고 주장하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "placeholder": true}, {"id": "guardian", "name": "Guardian", "role": "보수적 리스크 검토 (Conservative Risk)", "emoji": "🛡️", "color": "#e6e0d4", "team": "RISK MGMT", "status": "locked", "statusText": "\"그러다 다 잃는다\" — 뭐든 최악의 시나리오부터 확인하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "fullText": "\"그러다 다 잃는다\" — 뭐든 최악의 시나리오부터 확인하는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "placeholder": true}, {"id": "balance", "name": "Balance", "role": "중립 리스크 검토 (Neutral Risk)", "emoji": "⚖️", "color": "#e6e0d4", "team": "RISK MGMT", "status": "locked", "statusText": "Maverick과 Guardian을 저울질해 현실적인 중간 지점을 찾는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "fullText": "Maverick과 Guardian을 저울질해 현실적인 중간 지점을 찾는 성격. 3단계(자동매매·리스크 한도)에서 합류 예정", "placeholder": true}, {"id": "chief-strategist", "name": "The Boss", "role": "종합 리포트 작성 (포트폴리오 매니저)", "emoji": "🧑‍💼", "color": "#e8e0ff", "team": "PM", "subteam": null, "status": "done", "statusText": "리포트 작성 완료", "fullText": "코스피는 -5.12%(6,257.45) 급락하며 삼성전자(-8.76%)·SK하이닉스(-8.79%)가 전일 급등분을 대거 반납했고, 외국인·기관 순매도(합산 약 4.7조원)를 개인 2.5조원 순매수가 일부 받아내는 모습이었습니다. 원/달러 환율은 1,427.13원(+0.46%)으로 상승했으나 미 10년물 금리(4.673%, -1.52%)는 하락하고 달러인덱스(99.781, -0.02%)는 보합에 머물러, 국내 반도체 대형주 쏠림에 따른 국지적 위험회피가 두드러진 하루였습니다. 해외증시는 7/31 기준 S&P500이 +0.7%로 견조했지만 AAPL은 가이던스 둔화로 -7.35% 급락했고 NVDA는 하이퍼스케일러 capex 기대에 +2.93% 반등하는 등 종목별 온도차가 컸습니다. 암호화폐는 Coldcard 지갑 익스플로잇 사태(누적 피해 8,800만~8,900만달러)로 보안 신뢰가 훼손되며 BTC(-1.72%, RSI 과매도)·ETH(-2.6%) 모두 약세였으나, ETH는 ETF 순매수·스테이킹비율 등 중장기 자금유입 지표가 개선세를 보였습니다. 전반적으로 국내 반도체발 위험회피, 애플 개별주 조정, 크립토 보안이슈발 신뢰훼손이 겹쳤으나 미 금리 하락·달러 보합 등 매크로 환경 자체는 자산군별로 엇갈린 신호를 보였습니다.\n\n- Node(크립토): BTC RSI 과매도로 기술적 반등 여지는 있으나 Coldcard 지갑 익스플로잇(누적 8,800만달러+)이 콜드스토리지 신뢰를 훼손해 단기 심리가 취약한 상태.\n- Node(크립토): ETH는 ETF 순매수·스테이킹비율 등 온체인 지표가 개선세이나 가격은 오히려 하락, 순발행률 수치의 자료 편차로 인한 불확실성도 존재.\n- Anchor(국내주식): 반도체 4종목이 코스피 시총의 약 60%를 차지하는 쏠림 구조상, 삼성전자·SK하이닉스 동반 급락이 지수 전체 변동성을 키우는 취약점.\n- Anchor(국내주식): SK하이닉스는 역대최대 영업이익에도 컨센서스 하회와 PBR 6.76배의 밸류에이션 부담이 겹쳐 하락폭이 확대된 점에 유의.\n- Compass(해외주식): AAPL은 어닝서프라이즈에도 가이던스 하회·고밸류에이션(PER 35.5)·금리 부담이 겹쳐 급락, NVDA는 중기 추세가 아직 미확인 상태.\n- Compass(해외주식): 골드만삭스 리스크어피타이트 지표 과열경고와 \"8~9월 최악의 시기\" 계절적 약세 경고가 시장 전반의 밸류에이션·변동성 리스크로 상존.\n\n- Node(크립토): BTC 과매도 반등 신호와 Coldcard 보안이슈발 신뢰훼손 중 어느 쪽이 우세할지, 장·단기 시계열에 따라 신호가 엇갈리는 점을 계속 지켜볼 필요.\n- Anchor(국내주식): 삼성전자·SK하이닉스 급락이 전일 급등에 대한 단기 차익실현인지 반도체 밸류에이션 재평가의 시작인지는, 개인·외국인·기관 수급과 코스닥 순환매 여부를 함께 살펴볼 참고 지점.\n- Compass(해외주식): 애플은 실적 자체보다 가이던스·업황 코멘트가 주가에 더 크게 반영된 점이, 엔비디아는 하이퍼스케일러 capex 확대와 수출규제 우회 이슈가 동반되는 점이 관찰 포인트.\n- Compass(해외주식): 시장 전반의 유동성 환경(FOMC 금리동결, 피벗 기대)은 우호적이나 밸류에이션·계절성 측면의 경계감이 공존하는 혼재국면이라는 점."}], "consoleFeed": [{"category": "크립토", "items": [{"team": "크립토", "name": "Candle", "emoji": "🕯️", "time": "13:42", "text": "BTC: 89,324,000원(-1.72%), RSI14 27.85 과매도. ETH: 2,627,000원(-2.6%), RSI14 36.71 중립."}, {"team": "크립토", "name": "Vibes", "emoji": "🌊", "time": "13:42", "text": "Coldcard 지갑 해킹(8,900만달러규모)으로 보안신뢰훼손, 공포탐욕지수 중립~공포(25~44), 코스피급락·미국채금리하락으로 위험회피, DXY는 보합."}, {"team": "크립토", "name": "Chain", "emoji": "⛓️", "time": "13:42", "text": "BTC: Coldcard 시드결함 4차공격, 누적피해8,800만달러+, 비트코인ETF 순유출 지속보도. ETH: 7월 이더리움ETF 순매수3.65억달러(2025년10월이후 최대)로 자금유입우위, Arthur Hayes재매수, Glamsterdam하드포크 예정."}, {"team": "크립토", "name": "Proto", "emoji": "🧬", "time": "13:42", "text": "BTC: 유통량95%+채굴완료, 기관ETF자산1,300~2,000억달러, 신규채굴대비2.8배속도 기관매수. ETH: 스테이킹비율32.5%사상최고, L2TVL380억달러, ETF누적유입110억달러+."}, {"team": "크립토", "name": "Ape", "emoji": "🐵", "time": "13:42", "text": "BTC: RSI14 27.85 과매도(반등기대), 유통량95%+채굴완료, 기관ETF자산확대, 신규채굴대비2.8배속도 기관매수. ETH: ETF순매수3.65억달러(최대), 스테이킹비율32.5%사상최고, L2TVL380억달러."}, {"team": "크립토", "name": "Fud", "emoji": "❄️", "time": "13:42", "text": "BTC: -1.72%하락, Coldcard익스플로잇(누적8,800만달러+)으로 보안신뢰훼손, 파생상품 미결제약정급증, 공포탐욕지수 중립~공포, 비트코인ETF순유출지속. ETH: -2.6%하락, 연간순발행률 자료편차로 불확실성."}, {"team": "크립토", "name": "Node", "emoji": "🧑‍🔬", "time": "13:42", "text": "BTC: RSI과매도로 기술적반등여지 있으나 Coldcard보안이슈로 단기심리 취약, 장기수급구조(기관ETF·트레저리)는 견고. ETH: ETF자금유입·스테이킹비율 등 온체인지표 개선세이나 가격은 하락, 순발행률 불확실성 존재."}]}, {"category": "국내주식", "items": [{"team": "국내주식", "name": "Chart", "emoji": "📈", "time": "13:42", "text": "삼성전자: 239,500원(-8.76%), 5일선상회·20일60일선하회, RSI14 46.84중립. SK하이닉스: 1,567,000원(-8.79%), 5일선상회·20일60일선하회, RSI14 42.98중립. 둘다 직전거래일 급등후 급락."}, {"team": "국내주식", "name": "Scoop", "emoji": "📰", "time": "13:42", "text": "삼성전자·SK하이닉스 전일급등 차익실현으로 8%대급락. 반도체업황·AI투자지속성우려, 엔캐리청산우려, 중국CXMT경쟁우려, HBM경쟁이슈."}, {"team": "국내주식", "name": "Mood", "emoji": "🌙", "time": "13:42", "text": "코스피-5.12%급락, 외국인·기관순매도(합산약4.7조원) vs 개인2.5조원순매수. 반도체4종목이 코스피시총 약60%차지하는 쏠림구조. 코스닥+5%대반등."}, {"team": "국내주식", "name": "Ledger", "emoji": "📒", "time": "13:42", "text": "삼성전자: PER19.36/PBR3.33, 2분기영업이익89.5조원역대최대(+56%). SK하이닉스: PER15.14/PBR6.76, 2분기영업이익60.5조원역대최대(+557%,영업이익률76%) 단 컨센서스하회."}, {"team": "국내주식", "name": "Rally", "emoji": "🐂", "time": "13:42", "text": "삼성전자·SK하이닉스 급락에도 5일선상회, RSI중립권(과매도아님). 둘다 2분기 역대최대 영업이익. 개인2.5조원순매수, 코스닥+5%반등."}, {"team": "국내주식", "name": "Slump", "emoji": "🐻", "time": "13:42", "text": "삼성전자·SK하이닉스 -8%대급락, MA20·MA60동반하회. 반도체업황우려, 엔캐리청산우려, 중국경쟁심화. SK하이닉스PBR6.76배 밸류부담, 컨센서스하회. 코스피 외국인·기관순매도, 반도체쏠림구조 취약."}, {"team": "국내주식", "name": "Anchor", "emoji": "⚓", "time": "13:42", "text": "삼성전자: 실적펀더멘털 견조하나 업황·경쟁리스크가 급락 원인, 밸류에이션재평가압력 지속가능. SK하이닉스: 압도적 실적에도 컨센서스하회·PBR부담으로 하락폭 확대, 시장눈높이가 높아진 국면. 코스피전반: 외국인·기관매도를 개인이 일부받아냄, 반도체쏠림구조 변동성노출, 다만 미국환경우호적·코스닥반등으로 추세전환보다 단기조정 가능성."}]}, {"category": "해외주식", "items": [{"team": "해외주식", "name": "Trend", "emoji": "📊", "time": "13:42", "text": "AAPL: 308.91달러(-7.35%), MA5·MA20이탈, RSI14 45.08중립. NVDA: 200.75달러(+2.93%), RSI14 47.75중립, 저점반등흐름."}, {"team": "해외주식", "name": "Herald", "emoji": "📯", "time": "13:42", "text": "AAPL: 매출·EPS컨센서스상회했으나 가이던스둔화로 급락. NVDA: 하이퍼스케일러capex가이던스견조로 AI수요기대회복, 알리바바수출규제우회이슈(확인필요)."}, {"team": "해외주식", "name": "Pulse", "emoji": "💓", "time": "13:42", "text": "FOMC금리동결+피벗기대, S&P500기업85%실적상회(순이익성장률47%), 골드만삭스리스크어피타이트99백분위과열경고, \"8~9월최악의시기\"계절적약세경고."}, {"team": "해외주식", "name": "Vault", "emoji": "🏦", "time": "13:42", "text": "AAPL: PER35.5/PBR42.0, 시총4.54조달러, 실적서프라이즈. NVDA: PER30.8/PBR24.9, 시총4.86조달러, 52주고저중간구간."}, {"team": "해외주식", "name": "Surge", "emoji": "🚀", "time": "13:42", "text": "AAPL 어닝서프라이즈. NVDA +2.93%저점반등, 하이퍼스케일러capex견조. 시장전반 FOMC금리동결+피벗기대, S&P500실적호조."}, {"team": "해외주식", "name": "Drag", "emoji": "🪂", "time": "13:42", "text": "AAPL -7.35% MA5·MA20이탈, 가이던스하회, 고밸류에이션(PER35.5)에 금리부담. NVDA MA20·MA60여전히하회, 수출규제이슈. 시장전반 리스크어피타이트과열경고, 계절적약세경고."}, {"team": "해외주식", "name": "Compass", "emoji": "🧭", "time": "13:42", "text": "AAPL: 어닝서프라이즈에도 가이던스하회·고밸류에이션·금리환경으로 급락, 실적의 질이 헤드라인보다 중요해진 국면. NVDA: 기술적반등이나 중기추세미확인, 방향성확인전까지 중립. 시장전반: 유동성환경우호적이나 밸류에이션·계절성측면 경계필요."}]}, {"category": "PM", "items": [{"team": "PM", "name": "The Boss", "emoji": "🧑‍💼", "time": "13:42", "text": "코스피는 -5.12%(6,257.45) 급락하며 삼성전자(-8.76%)·SK하이닉스(-8.79%)가 전일 급등분을 대거 반납했고, 외국인·기관 순매도(합산 약 4.7조원)를 개인 2.5조원 순매수가 일부 받아내는 모습이었습니다. 원/달러 환율은 1,427.13원(+0.46%)으로 상승했으나 미 10년물 금리(4.673%, -1.52%)는 하락하고 달러인덱스(99.781, -0.02%)는 보합…"}]}]};
 
   const mapEl = document.getElementById('office-map');
   const feedEl = document.getElementById('feed');
@@ -541,6 +598,99 @@
         else pollLive(); // 즉시 한 번 폴링해서 analysisRunning 상태 반영
       })
       .catch(() => { runBtn.textContent = '실시간 서버에서만 사용 가능합니다'; setTimeout(() => { runBtn.textContent = RUN_BTN_DEFAULT; runBtn.disabled = false; }, 3000); });
+  });
+
+  const watchlistToggleBtn = document.getElementById('watchlist-toggle-btn');
+  const watchlistPanel = document.getElementById('watchlist-panel');
+  const watchlistStaticNote = document.getElementById('watchlist-static-note');
+  const WATCHLIST_TYPES = ['crypto', 'stocks_kr', 'stocks_us'];
+  const WATCHLIST_ID_FIELD = { crypto: 'symbol', stocks_kr: 'code', stocks_us: 'ticker' };
+  let watchlistLoaded = false;
+
+  watchlistToggleBtn.addEventListener('click', () => {
+    const willOpen = watchlistPanel.hidden;
+    watchlistPanel.hidden = !willOpen;
+    if (willOpen && !watchlistLoaded) loadWatchlist();
+  });
+
+  function setWatchlistInputsEnabled(enabled) {
+    WATCHLIST_TYPES.forEach(type => {
+      const group = document.querySelector(`.watchlist-group[data-type="${type}"]`);
+      group.querySelector('.watchlist-input').disabled = !enabled;
+      group.querySelector('.watchlist-add-btn').disabled = !enabled;
+    });
+  }
+
+  function renderChips(type, items) {
+    const chipsEl = document.querySelector(`.watchlist-group[data-type="${type}"] .watchlist-chips`);
+    const idField = WATCHLIST_ID_FIELD[type];
+    chipsEl.innerHTML = '';
+    items.forEach(item => {
+      const chip = document.createElement('span');
+      chip.className = 'watchlist-chip';
+      chip.innerHTML = `${item.name || item.symbol}<button type="button">✕</button>`;
+      chip.querySelector('button').addEventListener('click', () => deleteWatchlistItem(type, item[idField]));
+      chipsEl.appendChild(chip);
+    });
+  }
+
+  function loadWatchlist() {
+    fetch('/api/watchlist', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then(data => {
+        watchlistLoaded = true;
+        watchlistStaticNote.hidden = true;
+        setWatchlistInputsEnabled(true);
+        WATCHLIST_TYPES.forEach(type => renderChips(type, data[type] || []));
+      })
+      .catch(() => {
+        watchlistStaticNote.hidden = false;
+        setWatchlistInputsEnabled(false);
+      });
+  }
+
+  function addWatchlistItem(type) {
+    const group = document.querySelector(`.watchlist-group[data-type="${type}"]`);
+    const input = group.querySelector('.watchlist-input');
+    const btn = group.querySelector('.watchlist-add-btn');
+    const errorEl = group.querySelector('.watchlist-error');
+    const symbol = input.value.trim();
+    errorEl.textContent = '';
+    if (!symbol) return;
+    btn.disabled = true;
+    fetch('/api/watchlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, symbol }),
+    })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        btn.disabled = false;
+        if (!ok) { errorEl.textContent = data.error || '추가 실패'; return; }
+        input.value = '';
+        errorEl.textContent = data.warning || '';
+        loadWatchlist();
+        pollLive();
+      })
+      .catch(() => { btn.disabled = false; errorEl.textContent = '요청 실패'; });
+  }
+
+  function deleteWatchlistItem(type, symbol) {
+    fetch('/api/watchlist', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, symbol }),
+    })
+      .then(() => { loadWatchlist(); pollLive(); })
+      .catch(() => {});
+  }
+
+  WATCHLIST_TYPES.forEach(type => {
+    const group = document.querySelector(`.watchlist-group[data-type="${type}"]`);
+    group.querySelector('.watchlist-add-btn').addEventListener('click', () => addWatchlistItem(type));
+    group.querySelector('.watchlist-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addWatchlistItem(type);
+    });
   });
 </script>
 </body>
