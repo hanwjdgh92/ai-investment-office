@@ -54,5 +54,6 @@ type=crypto, symbol=BTC). type은 반드시 crypto/stocks_kr/stocks_us 중 하�
    ...
    ```
 
-4. 마지막으로 PowerShell에서 아래 명령으로 임시 데이터 파일을 정리하세요.
-   - `Remove-Item "data\adhoc\<type>_<symbol 대문자>.json" -ErrorAction SilentlyContinue`
+`data/adhoc/<type>_<symbol>.json` 정리는 이 커맨드가 하지 않습니다. 이 커맨드를 헤드리스로 호출하는
+`scripts/run_quick_analyze.ps1`이 실행 후 항상 삭제하므로(Claude 권한 승인 없이 동작), 여기서는
+3번까지만 하고 종료하세요.
