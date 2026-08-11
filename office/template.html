@@ -282,6 +282,13 @@
   .watchlist-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-bottom); border: 1px solid var(--border); border-radius: 999px; padding: 3px 6px 3px 10px; font-size: 0.76rem; }
   .watchlist-chip button { border: none; background: none; cursor: pointer; color: var(--text-sub); font-size: 0.8rem; padding: 0 2px; }
   .watchlist-static-note { grid-column: 1 / -1; color: var(--text-sub); font-size: 0.8rem; }
+  .search-suggestions { position: relative; z-index: 5; margin-top: 6px; max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-bg); }
+  .search-suggestions[hidden] { display: none; }
+  .search-suggestion-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.82rem; }
+  .search-suggestion-item:hover { background: var(--bg-bottom); }
+  .search-suggestion-badge { font-size: 0.68rem; padding: 2px 8px; border-radius: 999px; background: var(--accent); color: white; white-space: nowrap; }
+  .search-panel { display: grid; gap: 10px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 20px; padding: 16px 20px; margin-bottom: 20px; }
+  .search-panel[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -292,6 +299,7 @@
       <div class="meta" id="office-meta">불러오는 중...</div>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
+      <button id="search-toggle-btn" class="watchlist-toggle-btn" type="button">🔍 종목 검색</button>
       <button id="watchlist-toggle-btn" class="watchlist-toggle-btn" type="button">⚙ 관심종목 관리</button>
       <button id="run-now-btn" class="run-now-btn">지금 분석 받기</button>
     </div>
@@ -326,6 +334,20 @@
       <div class="watchlist-chips"></div>
     </div>
     <div class="watchlist-static-note" id="watchlist-static-note">
+      ⚠ 라이브 뷰어(launch_live_office.bat 실행 후 localhost:8787)에서만 사용할 수 있습니다.
+    </div>
+  </section>
+
+  <section class="search-panel" id="search-panel" hidden>
+    <input id="search-input" class="watchlist-input" type="text"
+           placeholder="종목/코인 검색 (심볼 또는 이름) — 워치리스트에 없어도 즉시분석" autocomplete="off" disabled>
+    <div id="search-suggestions" class="search-suggestions" hidden></div>
+    <div id="search-status" class="watchlist-error"></div>
+    <div>
+      <div class="watchlist-group-title">최근검색</div>
+      <div id="recent-searches-chips" class="watchlist-chips"></div>
+    </div>
+    <div class="watchlist-static-note" id="search-static-note">
       ⚠ 라이브 뷰어(launch_live_office.bat 실행 후 localhost:8787)에서만 사용할 수 있습니다.
     </div>
   </section>
@@ -715,6 +737,136 @@
     group.querySelector('.watchlist-input').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') addWatchlistItem(type);
     });
+  });
+
+  const searchToggleBtn = document.getElementById('search-toggle-btn');
+  const searchPanel = document.getElementById('search-panel');
+  const searchInput = document.getElementById('search-input');
+  const searchSuggestions = document.getElementById('search-suggestions');
+  const searchStatus = document.getElementById('search-status');
+  const searchStaticNote = document.getElementById('search-static-note');
+  const recentSearchesChips = document.getElementById('recent-searches-chips');
+  const SEARCH_TYPE_LABELS = { crypto: '크립토', stocks_kr: '국내주식', stocks_us: '해외주식' };
+  let searchLoaded = false;
+  let searchDebounceTimer = null;
+  let quickAnalyzePollTimer = null;
+
+  searchToggleBtn.addEventListener('click', () => {
+    const willOpen = searchPanel.hidden;
+    searchPanel.hidden = !willOpen;
+    if (willOpen && !searchLoaded) loadRecentSearches();
+  });
+
+  function loadRecentSearches() {
+    fetch('/api/recent-searches', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then(data => {
+        searchLoaded = true;
+        searchStaticNote.hidden = true;
+        searchInput.disabled = false;
+        renderRecentSearches(data.items || []);
+      })
+      .catch(() => {
+        searchStaticNote.hidden = false;
+        searchInput.disabled = true;
+      });
+  }
+
+  function renderRecentSearches(items) {
+    recentSearchesChips.innerHTML = '';
+    items.forEach(item => {
+      const chip = document.createElement('span');
+      chip.className = 'watchlist-chip';
+      chip.style.cursor = 'pointer';
+      chip.textContent = `${SEARCH_TYPE_LABELS[item.type] || item.type} · ${item.symbol}`;
+      chip.addEventListener('click', () => {
+        openModal({ emoji: '🔍', name: `${item.symbol} 즉시분석`, fullText: item.result_text });
+      });
+      recentSearchesChips.appendChild(chip);
+    });
+  }
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchDebounceTimer);
+    const q = searchInput.value.trim();
+    if (!q) { searchSuggestions.hidden = true; return; }
+    searchDebounceTimer = setTimeout(() => {
+      fetch(`/api/symbols?q=${encodeURIComponent(q)}`, { cache: 'no-store' })
+        .then(r => (r.ok ? r.json() : { items: [] }))
+        .then(data => renderSuggestions(data.items || []))
+        .catch(() => { searchSuggestions.hidden = true; });
+    }, 250);
+  });
+
+  function renderSuggestions(items) {
+    searchSuggestions.innerHTML = '';
+    if (!items.length) { searchSuggestions.hidden = true; return; }
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'search-suggestion-item';
+      row.innerHTML =
+        `<span class="search-suggestion-badge">${SEARCH_TYPE_LABELS[item.type] || item.type}</span>` +
+        `<span>${item.symbol}</span><span style="color:var(--text-sub);">${item.name}</span>`;
+      row.addEventListener('click', () => startQuickAnalyze(item));
+      searchSuggestions.appendChild(row);
+    });
+    searchSuggestions.hidden = false;
+  }
+
+  function startQuickAnalyze(item) {
+    searchSuggestions.hidden = true;
+    searchInput.value = `${item.symbol} 분석 중... (수십초~수분 소요)`;
+    searchInput.disabled = true;
+    searchStatus.textContent = '';
+    fetch('/api/quick-analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: item.type, symbol: item.symbol }),
+    })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) {
+          searchInput.disabled = false;
+          searchInput.value = '';
+          searchStatus.textContent = data.error || '분석 시작 실패';
+          return;
+        }
+        pollQuickAnalyze();
+      })
+      .catch(() => {
+        searchInput.disabled = false;
+        searchInput.value = '';
+        searchStatus.textContent = '요청 실패';
+      });
+  }
+
+  function pollQuickAnalyze() {
+    clearTimeout(quickAnalyzePollTimer);
+    fetch('/api/quick-analyze/status', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'running') {
+          quickAnalyzePollTimer = setTimeout(pollQuickAnalyze, 5000);
+          return;
+        }
+        searchInput.disabled = false;
+        searchInput.value = '';
+        if (data.status === 'done') {
+          openModal({ emoji: '🔍', name: `${data.symbol} 즉시분석`, fullText: data.result_text });
+          loadRecentSearches();
+        } else if (data.status === 'error') {
+          searchStatus.textContent = `분석 실패: ${data.error}`;
+        }
+      })
+      .catch(() => {
+        quickAnalyzePollTimer = setTimeout(pollQuickAnalyze, 5000);
+      });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!searchSuggestions.contains(e.target) && e.target !== searchInput) {
+      searchSuggestions.hidden = true;
+    }
   });
 </script>
 </body>
