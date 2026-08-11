@@ -11,19 +11,28 @@ import sys
 import threading
 import time
 import webbrowser
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
 OFFICE_DIR = ROOT / "office"
 RUN_SCHEDULED_ANALYSIS_PS1 = ROOT / "scripts" / "run_scheduled_analysis.ps1"
+RUN_QUICK_ANALYZE_PS1 = ROOT / "scripts" / "run_quick_analyze.ps1"
+QUICK_ANALYZE_LOG = ROOT / "data" / "adhoc" / "_quick_analyze_output.log"
+QUICK_ANALYZE_BUDGET = {"crypto": "2", "stocks_kr": "1", "stocks_us": "1"}
 
 _analysis_process: subprocess.Popen | None = None
+_quick_analyze_process: subprocess.Popen | None = None
+_quick_analyze_meta: dict | None = None
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fetch_crypto  # noqa: E402
 import fetch_stocks_kr  # noqa: E402
 import fetch_stocks_us  # noqa: E402
+import recent_searches_store  # noqa: E402
+import symbol_universe  # noqa: E402
 import watchlist_store  # noqa: E402
 from office_data import build_office_data  # noqa: E402
 
@@ -58,12 +67,20 @@ class OfficeHandler(BaseHTTPRequestHandler):
         pass  # 콘솔을 조용하게 유지
 
     def do_GET(self) -> None:  # noqa: N802
-        if self.path == "/" or self.path == "/index.html":
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if path == "/" or path == "/index.html":
             self._serve_index()
-        elif self.path == "/api/live":
+        elif path == "/api/live":
             self._serve_live()
-        elif self.path == "/api/watchlist":
+        elif path == "/api/watchlist":
             self._get_watchlist()
+        elif path == "/api/symbols":
+            self._search_symbols(parse_qs(parsed.query))
+        elif path == "/api/quick-analyze/status":
+            self._quick_analyze_status()
+        elif path == "/api/recent-searches":
+            self._get_recent_searches()
         else:
             self.send_error(404, "Not Found")
 
@@ -72,6 +89,8 @@ class OfficeHandler(BaseHTTPRequestHandler):
             self._run_now()
         elif self.path == "/api/watchlist":
             self._add_watchlist_item()
+        elif self.path == "/api/quick-analyze":
+            self._start_quick_analyze()
         else:
             self.send_error(404, "Not Found")
 
@@ -239,8 +258,80 @@ class OfficeHandler(BaseHTTPRequestHandler):
 
         self._send_json(200, {"status": "ok"})
 
+    def _search_symbols(self, query: dict) -> None:
+        q = (query.get("q") or [""])[0]
+        self._send_json(200, {"items": symbol_universe.search_all(q)})
+
+    def _get_recent_searches(self) -> None:
+        self._send_json(200, {"items": recent_searches_store.load()})
+
+    def _start_quick_analyze(self) -> None:
+        global _quick_analyze_process, _quick_analyze_meta
+        try:
+            body = self._read_json_body()
+        except Exception:  # noqa: BLE001
+            self._send_json(400, {"error": "잘못된 요청 형식입니다."})
+            return
+
+        type_ = body.get("type")
+        symbol = str(body.get("symbol", "")).strip().upper()
+        if type_ not in ("crypto", "stocks_kr", "stocks_us") or not symbol:
+            self._send_json(400, {"error": "type과 symbol이 필요합니다."})
+            return
+        if _quick_analyze_process is not None and _quick_analyze_process.poll() is None:
+            self._send_json(409, {"error": "이미 분석이 진행 중입니다."})
+            return
+
+        QUICK_ANALYZE_LOG.parent.mkdir(parents=True, exist_ok=True)
+        if QUICK_ANALYZE_LOG.exists():
+            QUICK_ANALYZE_LOG.unlink()
+
+        _quick_analyze_process = subprocess.Popen(
+            [
+                "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                "-File", str(RUN_QUICK_ANALYZE_PS1),
+                "-Type", type_, "-Symbol", symbol, "-LogFile", str(QUICK_ANALYZE_LOG),
+                "-MaxBudgetUsd", QUICK_ANALYZE_BUDGET[type_],
+            ],
+            cwd=ROOT,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
+        _quick_analyze_meta = {"type": type_, "symbol": symbol}
+        self._send_json(202, {"status": "started"})
+
+    def _quick_analyze_status(self) -> None:
+        global _quick_analyze_process, _quick_analyze_meta
+        if _quick_analyze_process is None:
+            self._send_json(200, {"status": "idle"})
+            return
+
+        returncode = _quick_analyze_process.poll()
+        if returncode is None:
+            self._send_json(200, {"status": "running", **_quick_analyze_meta})
+            return
+
+        meta = _quick_analyze_meta
+        _quick_analyze_process = None
+        _quick_analyze_meta = None
+        text = (
+            QUICK_ANALYZE_LOG.read_text(encoding="utf-8", errors="replace").strip()
+            if QUICK_ANALYZE_LOG.exists() else ""
+        )
+
+        if returncode != 0 or not text:
+            error = text[-2000:] if text else f"프로세스 종료 코드 {returncode}"
+            self._send_json(200, {"status": "error", **meta, "error": error})
+            return
+
+        entry = {**meta, "timestamp": datetime.now(timezone.utc).isoformat(), "result_text": text}
+        recent_searches_store.add(entry)
+        self._send_json(200, {"status": "done", **entry})
+
 
 def main() -> None:
+    print("종목 검색 자동완성 목록을 불러오는 중...")
+    symbol_universe.load_all()
+
     updater = threading.Thread(target=price_update_loop, daemon=True)
     updater.start()
 
