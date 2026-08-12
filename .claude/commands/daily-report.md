@@ -17,9 +17,12 @@ description: 암호화폐/국내주식/해외주식 데이터를 수집하고 �
    - 국내주식 데스크: `chart`, `ledger`, `mood`
    - 해외주식 데스크: `trend`, `vault`, `pulse`
 
-3. **리서치팀 (데스크별 독립 진행)**: 아래 3개 데스크별 리서치 종합 담당에게 같은 데스크의 애널리스트 3명
-   결과를 전달해 호출합니다. 세 데스크는 서로 완전히 독립적이므로 전체를 한꺼번에 병렬로 호출해도 됩니다.
-   - 크립토 데스크: `candle`/`proto`/`vibes` 결과 → `node`에게 전달해 종합
+3. **리서치팀 (데스크별 독립 진행)**: 데스크 간에는 서로 완전히 독립적이므로 병렬로 진행해도
+   됩니다. 단 크립토 데스크는 내부적으로 순차 호출이 필요합니다(Bear가 Bull의 글을 읽고 반박해야
+   하므로).
+   - 크립토 데스크(순차): `candle`/`proto`/`vibes` 결과 → `bull`에게 전달해 강세 논거 작성 →
+     `bull`의 결과를 `bear`에게 전달해 약세 논거+반박 작성 → `bull`/`bear` 결과를 모두 `node`에게
+     전달해 저울질
    - 국내주식 데스크: `chart`/`ledger`/`mood` 결과 → `anchor`에게 전달해 종합
    - 해외주식 데스크: `trend`/`vault`/`pulse` 결과 → `compass`에게 전달해 종합
 
@@ -29,8 +32,8 @@ description: 암호화폐/국내주식/해외주식 데이터를 수집하고 �
    `trigger`/`maverick`/`guardian` 결과를 모두 `balance`에게 전달해 최종 권고로 저울질합니다.
    국내주식/해외주식 데스크는 이 단계가 없습니다(크립토만 파일럿).
 
-5. **PM**: 2번의 9개 분석 결과, 3번의 리서치 종합 결과(node/anchor/compass 3개), 4번의 크립토 매매
-   시그널 결과(trigger/maverick/guardian/balance 4개)를 `chief-strategist` 서브에이전트에게 전달해
+5. **PM**: 2번의 9개 분석 결과, 3번의 리서치 종합 결과(bull/bear/node/anchor/compass 5개), 4번의 크립토
+   매매 시그널 결과(trigger/maverick/guardian/balance 4개)를 `chief-strategist` 서브에이전트에게 전달해
    최종 종합 리포트를 `reports/YYYY-MM-DD.md`로 작성하게 합니다.
 
 6. `python scripts\generate_office.py`를 실행해 최신 데이터/리포트를 반영한 `office\index.html`을 생성합니다.

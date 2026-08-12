@@ -47,6 +47,28 @@ EMPLOYEES = [
         "raw_data_glob": "crypto_*.json",
     },
     {
+        "id": "bull",
+        "name": "Bull",
+        "role": "크립토 강세 논거",
+        "emoji": "🐂",
+        "color": "#e0ffe6",
+        "team": "크립토",
+        "subteam": "RESEARCH",
+        "report_sections": ["Bull - 크립토 강세 논거"],
+        "raw_data_glob": None,
+    },
+    {
+        "id": "bear",
+        "name": "Bear",
+        "role": "크립토 약세 논거",
+        "emoji": "🐻",
+        "color": "#ffe0e0",
+        "team": "크립토",
+        "subteam": "RESEARCH",
+        "report_sections": ["Bear - 크립토 약세 논거"],
+        "raw_data_glob": None,
+    },
+    {
         "id": "node",
         "name": "Node",
         "role": "크립토 리서치 종합",
@@ -280,6 +302,10 @@ def _fundamentals_suffix(fundamentals: dict | None) -> str:
 WATCHLIST_KEY = {"크립토": "crypto", "국내주식": "stocks_kr", "해외주식": "stocks_us"}
 WATCHLIST_MATCH_FIELD = {"crypto": "symbol", "stocks_kr": "name", "stocks_us": "ticker"}
 
+# Bull/Bear는 Node가 저울질하기 전 중간 토론 산출물이라, watchlist 카드에는 최종 종합(Node/
+# Anchor/Compass)만 남기고 제외한다.
+WATCHLIST_EXCLUDE_IDS = {"bull", "bear"}
+
 
 def match_symbol_lines(text: str, match_key: str) -> list[str]:
     prefix = match_key.upper() + ":"
@@ -289,6 +315,30 @@ def match_symbol_lines(text: str, match_key: str) -> list[str]:
         if line.upper().startswith(prefix):
             lines.append(line)
     return lines
+
+
+JSON_SIGNAL_BLOCK_RE = re.compile(r"```json\s*(\{.*?\})\s*```", re.DOTALL)
+
+
+def parse_json_block(text: str) -> dict | None:
+    match = JSON_SIGNAL_BLOCK_RE.search(text)
+    if not match:
+        return None
+    try:
+        data = json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return None
+    signals = data.get("signals")
+    if not isinstance(signals, list):
+        return None
+    result = {}
+    for entry in signals:
+        if not isinstance(entry, dict):
+            continue
+        symbol = entry.get("symbol")
+        if symbol:
+            result[str(symbol).upper()] = entry
+    return result
 
 
 def build_office_data() -> dict:
@@ -354,13 +404,21 @@ def build_office_data() -> dict:
             }
         )
 
+    trigger_signals = parse_json_block(emp_full_text.get("trigger", "")) or {}
+
     watchlist = watchlist_store.load()
     watchlist_groups = []
     for team in ("크립토", "국내주식", "해외주식"):
         wl_key = WATCHLIST_KEY[team]
         match_field = WATCHLIST_MATCH_FIELD[wl_key]
         # 종목카드에는 애널리스트 개별 원문이 아니라 데스크 리서치 종합(강세/약세 저울질 결과)만 보여준다.
-        team_employees = [e for e in EMPLOYEES if e["team"] == team and e.get("subteam") == "RESEARCH"]
+        team_employees = [
+            e
+            for e in EMPLOYEES
+            if e["team"] == team
+            and e.get("subteam") == "RESEARCH"
+            and e["id"] not in WATCHLIST_EXCLUDE_IDS
+        ]
 
         cards = []
         for item in watchlist[wl_key]:
@@ -374,7 +432,12 @@ def build_office_data() -> dict:
                 for line in match_symbol_lines(emp_full_text.get(emp["id"], ""), match_key):
                     notes.append({"name": emp["name"], "emoji": emp["emoji"], "text": line})
 
-            cards.append({"key": match_key, "label": label, "notes": notes})
+            card = {"key": match_key, "label": label, "notes": notes}
+            if wl_key == "crypto":
+                signal = trigger_signals.get(match_key.upper())
+                if signal:
+                    card["signal"] = signal
+            cards.append(card)
 
         if cards:
             watchlist_groups.append({"category": team, "items": cards})
