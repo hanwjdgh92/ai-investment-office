@@ -65,6 +65,11 @@ def search(type_: str, query: str, limit: int = 20) -> list[dict]:
     return matches[:limit]
 
 
+def exists(type_: str, symbol: str) -> bool:
+    symbol_upper = symbol.strip().upper()
+    return any(item["symbol"].upper() == symbol_upper for item in _CACHE.get(type_, []))
+
+
 def search_all(query: str, limit_per_type: int = 8) -> list[dict]:
     results: list[dict] = []
     for type_ in ("crypto", "stocks_kr", "stocks_us"):

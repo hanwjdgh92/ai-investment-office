@@ -778,7 +778,7 @@
       const chip = document.createElement('span');
       chip.className = 'watchlist-chip';
       chip.style.cursor = 'pointer';
-      chip.textContent = `${SEARCH_TYPE_LABELS[item.type] || item.type} · ${item.symbol}`;
+      chip.textContent = `${SEARCH_TYPE_LABELS[item.type] || item.type} · ${item.name || item.symbol}`;
       chip.addEventListener('click', () => {
         openModal({ emoji: '🔍', name: `${item.symbol} 즉시분석`, fullText: item.result_text });
       });
@@ -821,7 +821,7 @@
     fetch('/api/quick-analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: item.type, symbol: item.symbol }),
+      body: JSON.stringify({ type: item.type, symbol: item.symbol, name: item.name }),
     })
       .then(r => r.json().then(data => ({ ok: r.ok, data })))
       .then(({ ok, data }) => {

@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 .superpowers/
 data/adhoc/
+data/recent_searches.json

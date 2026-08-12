@@ -282,6 +282,13 @@
   .watchlist-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-bottom); border: 1px solid var(--border); border-radius: 999px; padding: 3px 6px 3px 10px; font-size: 0.76rem; }
   .watchlist-chip button { border: none; background: none; cursor: pointer; color: var(--text-sub); font-size: 0.8rem; padding: 0 2px; }
   .watchlist-static-note { grid-column: 1 / -1; color: var(--text-sub); font-size: 0.8rem; }
+  .search-suggestions { position: relative; z-index: 5; margin-top: 6px; max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-bg); }
+  .search-suggestions[hidden] { display: none; }
+  .search-suggestion-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.82rem; }
+  .search-suggestion-item:hover { background: var(--bg-bottom); }
+  .search-suggestion-badge { font-size: 0.68rem; padding: 2px 8px; border-radius: 999px; background: var(--accent); color: white; white-space: nowrap; }
+  .search-panel { display: grid; gap: 10px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 20px; padding: 16px 20px; margin-bottom: 20px; }
+  .search-panel[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -292,6 +299,7 @@
       <div class="meta" id="office-meta">불러오는 중...</div>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
+      <button id="search-toggle-btn" class="watchlist-toggle-btn" type="button">🔍 종목 검색</button>
       <button id="watchlist-toggle-btn" class="watchlist-toggle-btn" type="button">⚙ 관심종목 관리</button>
       <button id="run-now-btn" class="run-now-btn">지금 분석 받기</button>
     </div>
@@ -330,6 +338,20 @@
     </div>
   </section>
 
+  <section class="search-panel" id="search-panel" hidden>
+    <input id="search-input" class="watchlist-input" type="text"
+           placeholder="종목/코인 검색 (심볼 또는 이름) — 워치리스트에 없어도 즉시분석" autocomplete="off" disabled>
+    <div id="search-suggestions" class="search-suggestions" hidden></div>
+    <div id="search-status" class="watchlist-error"></div>
+    <div>
+      <div class="watchlist-group-title">최근검색</div>
+      <div id="recent-searches-chips" class="watchlist-chips"></div>
+    </div>
+    <div class="watchlist-static-note" id="search-static-note">
+      ⚠ 라이브 뷰어(launch_live_office.bat 실행 후 localhost:8787)에서만 사용할 수 있습니다.
+    </div>
+  </section>
+
   <div class="layout">
     <main class="office-map" id="office-map"></main>
     <aside class="console">
@@ -349,7 +371,7 @@
 </div>
 
 <script>
-  window.__OFFICE_DATA__ = {"title": "나의 AI 투자 오피스", "generatedAt": "2026-08-09 21:52", "employees": [{"id": "candle", "name": "Candle", "role": "암호화폐 기술적 분석", "emoji": "🕯️", "color": "#ffd9ec", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 업비트91,301,000원(-0.05%)/바이빗64,948.7USDT(-0.07%). MA5<MA20<MA60 역배열. MA20대비-1.39%,MA60대비-2.83%이격. RSI14 26.82(과매도). 8월계절적약세, Fed완화기대축소, ETF주간유입 7월고점대비83%감소와 맞물려 박스권.\nETH: 업비트2,702,000원(+0.3%)/바이빗1,922.28USDT(+0.1%). MA5<MA20>MA60 전환기. MA20대비-0.92%,MA60대비+2.17%. RSI14 32.04(과매도근접)."}, {"id": "proto", "name": "Proto", "role": "암호화폐 펀더멘털", "emoji": "🧬", "color": "#e0f7e9", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 유통량95.5%, 언락리스크없음. 8월ETF순유입재개(3거래일$626M,이후5일연속총8.5억달러), 단 연초누적44.4억달러순유출.\nETH: 유통량상한없음,29~32%스테이킹락업. DeFiTVL418.4억달러(+7.8%,30일) 견조하나 DEX거래량-36.1%급감. 8월ETF유입재개."}, {"id": "vibes", "name": "Vibes", "role": "암호화폐 뉴스·심리", "emoji": "🌊", "color": "#ffe9d9", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 8/8 BIP-110소프트포크실패로 소수체인분리(영향제한적). ETF순유입반전되나 연초누적정점대비16만BTC+순유출지속.\nETH: Glamsterdam업그레이드진행, BitMine ETH100만개+매집(공급4.3%+), Grayscale스테이킹ETF신청수정.\n리스크온오프: DXY-0.37%,원화강세는 위험선호,KOSPI-0.6%는반대. BTC/ETH RSI과매도+역배열로 매크로신호와 크립토자체모멘텀 괴리."}, {"id": "node", "name": "Node", "role": "크립토 리서치 종합", "emoji": "🧑‍🔬", "color": "#eae1ff", "team": "크립토", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 약세쪽근거가 더견고(확정된하락추세 vs 검증중인초기반전조짐). 비대칭 약세쪽소폭우위. 지켜볼점: ETF연속유입으로 연초누적갭좁혀지는지, MA5의MA20상향돌파여부.\nETH: 강세쪽근거품질·개수우위(이벤트+매크로+온체인 세갈래fact교차: BitMine매집,Glamsterdam,ETF유입,TVL+7.8%,매도압력낮음). 단 DEX거래량급감은 구조적경고음."}, {"id": "chart", "name": "Chart", "role": "국내주식 기술적 분석", "emoji": "📈", "color": "#d9f2ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: 231,000원(+0.22%). 역배열,MA20대비-6.84%이격. RSI46.73(중립).\nSK하이닉스: 1,422,000원(-4.88%). 역배열,MA20대비-17.58%큰이격. 5일신저가,2일연속급락. RSI40.35. 메모리업사이클둔화우려로 아시아메모리주동반급락."}, {"id": "ledger", "name": "Ledger", "role": "국내주식 펀더멘털", "emoji": "📒", "color": "#cfe8ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: PER18.67배/PBR3.21배(중간). 2Q매출171.5조/영업이익89.5조 역대최대.\nSK하이닉스: PER13.74배(저)/PBR6.13배(높음). 영업이익률76%,추정ROE약96%. 저평가라기보다 고수익성국면반영. 밸류에이션-가격모멘텀괴리유의."}, {"id": "mood", "name": "Mood", "role": "국내주식 뉴스·심리", "emoji": "🌙", "color": "#f0e0ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "SK하이닉스: 이틀연속급락. HBM생산확대속도조절+엔비디아루빈생산량하향 겹치며 AI반도체수요둔화루머(미확인,논란단계). 실적컨센서스는 악화안됨.\n구조적리스크: 4대반도체관련종목 코스피시총비중60%육박.\n수급: 외국인8,633억순매도(반도체집중), 기관5,790억순매수.\n리스크온오프: 코스피-0.6%(리스크오프) vs 원화강세(리스크온) 혼조, 결론 리스크오프에가까운혼조."}, {"id": "anchor", "name": "Anchor", "role": "국내주식 리서치 종합", "emoji": "⚓", "color": "#eae1ff", "team": "국내주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: 약세쪽으로약간기움. 하방(가격모멘텀+수급+지수구조)이 상방(펀더멘털견조)보다 다각적.\nSK하이닉스: 하방이명확히우위. 실적은견고하나가격이크게괴리, 애널리스트3명모두하방방향에서공통지적. 단루머가 미확인이라 일방적추세단정은이름."}, {"id": "trend", "name": "Trend", "role": "해외주식 기술적 분석", "emoji": "📊", "color": "#ffe0d0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 313.33달러(+0.29%). 전환기/혼조,MA20대비-3.12%할인. RSI40.82(중립~약세), 경미한다이버전스소지.\nNVDA: 223.96달러(+2.27%). 전환기/혼조,MA20대비+8.29%단기과열신호. RSI65.61(과매수근접)."}, {"id": "vault", "name": "Vault", "role": "해외주식 펀더멘털", "emoji": "🏦", "color": "#d0e0ff", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: PER35.97배/PBR42.57배(고). 미10년물금리소폭상승으로밸류에이션부담. 52주고점대비-9.1%. 7/30실적 매출+16%YoY, 서비스매출하회+마진가이던스우려로-6.65%급락후안정화.\nNVDA: PER34.24배(3년평균대비낮은편)/PBR27.75배. 52주고점대비-5.3%(신고가근접). 8/26실적예정."}, {"id": "pulse", "name": "Pulse", "role": "해외주식 뉴스·심리", "emoji": "💓", "color": "#ffd0e0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: EPS2.02(컨센2.09하회, 실제로는미스), 서비스매출부진+마진가이던스우려로급락. 8/10배당락예정.\nNVDA: 7월말반도체섹터1조달러+셀오프후AI수요기대로반등. AI인프라2500억달러파이낸싱딜재무노출우려(미확인루머). 8/26실적핵심바이너리이벤트.\n리스크온오프: S&P500+0.62%(사상최고),US10Y-0.21%,DXY-0.37% 3지표모두리스크온일치. 배경: 7월고용예상외감소로 긴축유보기대.\n군중심리결론: 표면적리스크온+잠재적과열경계공존. 7월말셀오프가1~2주만에완전히되돌려짐,8/26실적바이너리이벤트앞두고낙관선반영."}, {"id": "compass", "name": "Compass", "role": "해외주식 리서치 종합", "emoji": "🧭", "color": "#eae1ff", "team": "해외주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 약세쪽비대칭. 약세근거(실적급락+20일선아래+고밸류+배당락)는 3명모두겹치는fact, 강세는 저가매력정도의해석위주.\nNVDA: 강세/약세 근거품질 팽팽, 판단근거부족에가까움. 무게중심이 8/26실적발표일로쏠림. 이벤트리스크관리구간으로판단."}, {"id": "trigger", "name": "Trigger", "role": "매매 시그널 생성 (Execution Specialist)", "emoji": "🎯", "color": "#dcdcdc", "team": "TRADING", "subteam": null, "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 관망, 포지션0%. MA5<MA20<MA60 역배열로 하방 목표가(지지선) 산출 불가해 손익비 계산 불가.\nETH: 매수. 진입가2,702,000원/목표가2,727,000원(MA20)/손절가2,699,200원(MA5)/포지션3%/손익비≈8.9. DEX거래량-36.1%급감을 반영해 포지션을 5%가 아닌 3%로 산정."}, {"id": "maverick", "name": "Maverick", "role": "공격적 리스크 검토 (Aggressive Risk)", "emoji": "🦉", "color": "#e6e0d4", "team": "RISK MGMT", "subteam": null, "status": "done", "statusText": "리포트 작성 완료", "fullText": "ETH 포지션5% 상향 주장(강세 비대칭 논거 반영). BTC는 관망에 이견없음."}, {"id": "guardian", "name": "Guardian", "role": "보수적 리스크 검토 (Conservative Risk)", "emoji": "🛡️", "color": "#e6e0d4", "team": "RISK MGMT", "subteam": null, "status": "done", "statusText": "리포트 작성 완료", "fullText": "ETH 손절거리 타이트, 휘핑위험 우려로 포지션 확대에 신중 견해. BTC는 관망에 이견없음."}, {"id": "balance", "name": "Balance", "role": "중립 리스크 검토 (Neutral Risk)", "emoji": "⚖️", "color": "#e6e0d4", "team": "RISK MGMT", "subteam": null, "status": "pending", "statusText": "대기 중", "fullText": "아직 작성된 분석이 없습니다."}, {"id": "chief-strategist", "name": "The Boss", "role": "종합 리포트 작성 (포트폴리오 매니저)", "emoji": "🧑‍💼", "color": "#e8e0ff", "team": "PM", "subteam": null, "status": "done", "statusText": "리포트 작성 완료", "fullText": "매크로는 달러인덱스(-0.37%)·미국10년물(-0.21%) 동반 하락과 원화강세(-0.46%)로 표면적 리스크온 신호를 보였으나, 코스피(-0.6%)와 S&P500(+0.62%)이 반대 방향으로 움직이는 디커플링이 뚜렷했다. 크립토 데스크는 BTC(약세 우위)와 ETH(강세 우위)로 자산 내에서도 온도차가 컸고, 실제 매매시그널은 ETH 소액 매수(포지션3%)·BTC 관망으로 정리됐다. 국내주식은 SK하이닉스가 이틀연속 급락하며 하방 우위가 명확했고 삼성전자는 그 여파로 약세 쪽에 소폭 기울었다. 해외주식은 AAPL이 실적 급락+고밸류+배당락 겹침으로 약세 비대칭인 반면, NVDA는 8/26 실적을 앞두고 강약 근거가 팽팽해 이벤트리스크 관리 구간으로 판단됐다.\n\n- **지수 디커플링(공통 관찰)**: 코스피(-0.6%)와 S&P500(+0.62%)이 반대로 움직였고, 원화강세(-0.46%)·DXY하락(-0.37%)이라는 표면적 리스크온 신호에도 크립토(BTC RSI과매도+역배열)와 국내주식(외국인 반도체 순매도, 코스피 리스크오프) 양쪽에서 매크로 신호와 자산 자체 모멘텀이 어긋나는 괴리가 동시에 나타났다.\n- **반도체 밸류체인 공통 이슈**: SK하이닉스 급락(-4.88%, 2일연속)이 AI반도체 수요둔화 루머(미확인)와 겹치며 코스피 4대반도체 시총비중 60%육박이라는 구조적 리스크로 확대될 소지가 있고, 삼성전자 약세 쏠림도 이 여파를 받는 개별 데스크 고유 이슈로 구분된다.\n- 크립토: BTC RSI14 26.82 과매도+역배열 지속, ETF 연초누적 순유출(44.4억달러) 미해소, ETH는 DEX거래량 -36.1% 구조적 경고음.\n- 국내주식: SK하이닉스 MA20대비-17.58% 큰 이격+5일신저가, 밸류에이션(저PER)과 가격모멘텀(급락) 간 괴리, HBM/루빈 루머의 미확인 상태.\n- 해외주식: AAPL 서비스매출 부진+마진가이던스 우려+8/10 배당락, NVDA MA20대비+8.29% 단기과열+RSI65.61 과매수근접, 양사 공통으로 미국10년물 금리 소폭상승에 따른 고PER 밸류에이션 부담(Vault 지적)과 8/26 NVDA 실적 바이너리 이벤트 대기.\n\n- **크립토**: Node가 짚은 대로 BTC는 ETF 연속유입이 연초누적 순유출 갭을 얼마나 좁히는지, MA5의 MA20 상향돌파 여부가 관찰 포인트다. ETH는 강세 비대칭 구도의 핵심 축인 BitMine 등 기관 매집·스테이킹 흐름이 지속되는지, DEX거래량 급감이라는 구조적 경고음이 완화되는지 지켜볼 필요가 있다.\n- **국내주식**: Anchor가 지적한 대로 SK하이닉스의 HBM/루빈 생산량 조정 루머가 확인·해소되는 방향을 지켜볼 필요가 있고, 삼성전자는 견조한 펀더멘털과 수급·모멘텀 약세가 언제 어느 쪽으로 정리되는지가 관찰 포인트다.\n- **해외주식**: Compass가 제시한 AAPL의 실적급락+고밸류+배당락 겹침이 추가 하방으로 이어지는지, NVDA는 8/26 실적이 팽팽한 강약 균형을 어느 쪽으로 기울이는 스윙팩터가 될지 관찰이 필요하다."}], "summary": "매크로는 달러인덱스(-0.37%)·미국10년물(-0.21%) 동반 하락과 원화강세(-0.46%)로 표면적 리스크온 신호를 보였으나, 코스피(-0.6%)와 S&P500(+0.62%)이 반대 방향으로 움직이는 디커플링이 뚜렷했다. 크립토 데스크는 BTC(약세 우위)와 ETH(강세 우위)로 자산 내에서도 온도차가 컸고, 실제 매매시그널은 ETH 소액 매수(포지션3%)·BTC 관망으로 정리됐다. 국내주식은 SK하이닉스가 이틀연속 급락하며 하방 우위가 명확했고 삼성전자는 그 여파로 약세 쪽에 소폭 기울었다. 해외주식은 AAPL이 실적 급락+고밸류+배당락 겹침으로 약세 비대칭인 반면, NVDA는 8/26 실적을 앞두고 강약 근거가 팽팽해 이벤트리스크 관리 구간으로 판단됐다.", "watchlistGroups": [{"category": "크립토", "items": [{"key": "BTC", "label": "BTC", "notes": [{"name": "Node", "emoji": "🧑‍🔬", "text": "BTC: 약세쪽근거가 더견고(확정된하락추세 vs 검증중인초기반전조짐). 비대칭 약세쪽소폭우위. 지켜볼점: ETF연속유입으로 연초누적갭좁혀지는지, MA5의MA20상향돌파여부."}]}, {"key": "ETH", "label": "ETH", "notes": [{"name": "Node", "emoji": "🧑‍🔬", "text": "ETH: 강세쪽근거품질·개수우위(이벤트+매크로+온체인 세갈래fact교차: BitMine매집,Glamsterdam,ETF유입,TVL+7.8%,매도압력낮음). 단 DEX거래량급감은 구조적경고음."}]}]}, {"category": "국내주식", "items": [{"key": "삼성전자", "label": "삼성전자", "notes": [{"name": "Anchor", "emoji": "⚓", "text": "삼성전자: 약세쪽으로약간기움. 하방(가격모멘텀+수급+지수구조)이 상방(펀더멘털견조)보다 다각적."}]}, {"key": "SK하이닉스", "label": "SK하이닉스", "notes": [{"name": "Anchor", "emoji": "⚓", "text": "SK하이닉스: 하방이명확히우위. 실적은견고하나가격이크게괴리, 애널리스트3명모두하방방향에서공통지적. 단루머가 미확인이라 일방적추세단정은이름."}]}]}, {"category": "해외주식", "items": [{"key": "AAPL", "label": "Apple (AAPL)", "notes": [{"name": "Compass", "emoji": "🧭", "text": "AAPL: 약세쪽비대칭. 약세근거(실적급락+20일선아래+고밸류+배당락)는 3명모두겹치는fact, 강세는 저가매력정도의해석위주."}]}, {"key": "NVDA", "label": "NVIDIA (NVDA)", "notes": [{"name": "Compass", "emoji": "🧭", "text": "NVDA: 강세/약세 근거품질 팽팽, 판단근거부족에가까움. 무게중심이 8/26실적발표일로쏠림. 이벤트리스크관리구간으로판단."}]}]}]};
+  window.__OFFICE_DATA__ = {"title": "나의 AI 투자 오피스", "generatedAt": "2026-08-12 20:28", "employees": [{"id": "candle", "name": "Candle", "role": "암호화폐 기술적 분석", "emoji": "🕯️", "color": "#ffd9ec", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 업비트91,301,000원(-0.05%)/바이빗64,948.7USDT(-0.07%). MA5<MA20<MA60 역배열. MA20대비-1.39%,MA60대비-2.83%이격. RSI14 26.82(과매도). 8월계절적약세, Fed완화기대축소, ETF주간유입 7월고점대비83%감소와 맞물려 박스권.\nETH: 업비트2,702,000원(+0.3%)/바이빗1,922.28USDT(+0.1%). MA5<MA20>MA60 전환기. MA20대비-0.92%,MA60대비+2.17%. RSI14 32.04(과매도근접)."}, {"id": "proto", "name": "Proto", "role": "암호화폐 펀더멘털", "emoji": "🧬", "color": "#e0f7e9", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 유통량95.5%, 언락리스크없음. 8월ETF순유입재개(3거래일$626M,이후5일연속총8.5억달러), 단 연초누적44.4억달러순유출.\nETH: 유통량상한없음,29~32%스테이킹락업. DeFiTVL418.4억달러(+7.8%,30일) 견조하나 DEX거래량-36.1%급감. 8월ETF유입재개."}, {"id": "vibes", "name": "Vibes", "role": "암호화폐 뉴스·심리", "emoji": "🌊", "color": "#ffe9d9", "team": "크립토", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 8/8 BIP-110소프트포크실패로 소수체인분리(영향제한적). ETF순유입반전되나 연초누적정점대비16만BTC+순유출지속.\nETH: Glamsterdam업그레이드진행, BitMine ETH100만개+매집(공급4.3%+), Grayscale스테이킹ETF신청수정.\n리스크온오프: DXY-0.37%,원화강세는 위험선호,KOSPI-0.6%는반대. BTC/ETH RSI과매도+역배열로 매크로신호와 크립토자체모멘텀 괴리."}, {"id": "node", "name": "Node", "role": "크립토 리서치 종합", "emoji": "🧑‍🔬", "color": "#eae1ff", "team": "크립토", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 약세쪽근거가 더견고(확정된하락추세 vs 검증중인초기반전조짐). 비대칭 약세쪽소폭우위. 지켜볼점: ETF연속유입으로 연초누적갭좁혀지는지, MA5의MA20상향돌파여부.\nETH: 강세쪽근거품질·개수우위(이벤트+매크로+온체인 세갈래fact교차: BitMine매집,Glamsterdam,ETF유입,TVL+7.8%,매도압력낮음). 단 DEX거래량급감은 구조적경고음."}, {"id": "chart", "name": "Chart", "role": "국내주식 기술적 분석", "emoji": "📈", "color": "#d9f2ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: 231,000원(+0.22%). 역배열,MA20대비-6.84%이격. RSI46.73(중립).\nSK하이닉스: 1,422,000원(-4.88%). 역배열,MA20대비-17.58%큰이격. 5일신저가,2일연속급락. RSI40.35. 메모리업사이클둔화우려로 아시아메모리주동반급락."}, {"id": "ledger", "name": "Ledger", "role": "국내주식 펀더멘털", "emoji": "📒", "color": "#cfe8ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: PER18.67배/PBR3.21배(중간). 2Q매출171.5조/영업이익89.5조 역대최대.\nSK하이닉스: PER13.74배(저)/PBR6.13배(높음). 영업이익률76%,추정ROE약96%. 저평가라기보다 고수익성국면반영. 밸류에이션-가격모멘텀괴리유의."}, {"id": "mood", "name": "Mood", "role": "국내주식 뉴스·심리", "emoji": "🌙", "color": "#f0e0ff", "team": "국내주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "SK하이닉스: 이틀연속급락. HBM생산확대속도조절+엔비디아루빈생산량하향 겹치며 AI반도체수요둔화루머(미확인,논란단계). 실적컨센서스는 악화안됨.\n구조적리스크: 4대반도체관련종목 코스피시총비중60%육박.\n수급: 외국인8,633억순매도(반도체집중), 기관5,790억순매수.\n리스크온오프: 코스피-0.6%(리스크오프) vs 원화강세(리스크온) 혼조, 결론 리스크오프에가까운혼조."}, {"id": "anchor", "name": "Anchor", "role": "국내주식 리서치 종합", "emoji": "⚓", "color": "#eae1ff", "team": "국내주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "삼성전자: 약세쪽으로약간기움. 하방(가격모멘텀+수급+지수구조)이 상방(펀더멘털견조)보다 다각적.\nSK하이닉스: 하방이명확히우위. 실적은견고하나가격이크게괴리, 애널리스트3명모두하방방향에서공통지적. 단루머가 미확인이라 일방적추세단정은이름."}, {"id": "trend", "name": "Trend", "role": "해외주식 기술적 분석", "emoji": "📊", "color": "#ffe0d0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 313.33달러(+0.29%). 전환기/혼조,MA20대비-3.12%할인. RSI40.82(중립~약세), 경미한다이버전스소지.\nNVDA: 223.96달러(+2.27%). 전환기/혼조,MA20대비+8.29%단기과열신호. RSI65.61(과매수근접)."}, {"id": "vault", "name": "Vault", "role": "해외주식 펀더멘털", "emoji": "🏦", "color": "#d0e0ff", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: PER35.97배/PBR42.57배(고). 미10년물금리소폭상승으로밸류에이션부담. 52주고점대비-9.1%. 7/30실적 매출+16%YoY, 서비스매출하회+마진가이던스우려로-6.65%급락후안정화.\nNVDA: PER34.24배(3년평균대비낮은편)/PBR27.75배. 52주고점대비-5.3%(신고가근접). 8/26실적예정."}, {"id": "pulse", "name": "Pulse", "role": "해외주식 뉴스·심리", "emoji": "💓", "color": "#ffd0e0", "team": "해외주식", "subteam": "ANALYSTS", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: EPS2.02(컨센2.09하회, 실제로는미스), 서비스매출부진+마진가이던스우려로급락. 8/10배당락예정.\nNVDA: 7월말반도체섹터1조달러+셀오프후AI수요기대로반등. AI인프라2500억달러파이낸싱딜재무노출우려(미확인루머). 8/26실적핵심바이너리이벤트.\n리스크온오프: S&P500+0.62%(사상최고),US10Y-0.21%,DXY-0.37% 3지표모두리스크온일치. 배경: 7월고용예상외감소로 긴축유보기대.\n군중심리결론: 표면적리스크온+잠재적과열경계공존. 7월말셀오프가1~2주만에완전히되돌려짐,8/26실적바이너리이벤트앞두고낙관선반영."}, {"id": "compass", "name": "Compass", "role": "해외주식 리서치 종합", "emoji": "🧭", "color": "#eae1ff", "team": "해외주식", "subteam": "RESEARCH", "status": "done", "statusText": "리포트 작성 완료", "fullText": "AAPL: 약세쪽비대칭. 약세근거(실적급락+20일선아래+고밸류+배당락)는 3명모두겹치는fact, 강세는 저가매력정도의해석위주.\nNVDA: 강세/약세 근거품질 팽팽, 판단근거부족에가까움. 무게중심이 8/26실적발표일로쏠림. 이벤트리스크관리구간으로판단."}, {"id": "trigger", "name": "Trigger", "role": "매매 시그널 생성 (Execution Specialist)", "emoji": "🎯", "color": "#dcdcdc", "team": "TRADING", "subteam": null, "status": "done", "statusText": "리포트 작성 완료", "fullText": "BTC: 관망, 포지션0%. MA5<MA20<MA60 역배열로 하방 목표가(지지선) 산출 불가해 손익비 계산 불가.\nETH: 매수. 진입가2,702,000원/목표가2,727,000원(MA20)/손절가2,699,200원(MA5)/포지션3%/손익비≈8.9. DEX거래량-36.1%급감을 반영해 포지션을 5%가 아닌 3%로 산정."}, {"id": "maverick", "name": "Maverick", "role": "공격적 리스크 검토 (Aggressive Risk)", "emoji": "🦉", "color": "#e6e0d4", "team": "RISK MGMT", "subteam": null, "status": "done", "statusText": "리포트 작성 완료", "fullText": "ETH 포지션5% 상향 주장(강세 비대칭 논거 반영). BTC는 관망에 이견없음."}, {"id": "guardian", "name": "Guardian", "role": "보수적 리스크 검토 (Conservative Risk)", "emoji": "🛡️", "color": "#e6e0d4", "team": "RISK MGMT", "subteam": null, "status": "done", "statusText": "리포트 작성 완료", "fullText": "ETH 손절거리 타이트, 휘핑위험 우려로 포지션 확대에 신중 견해. BTC는 관망에 이견없음."}, {"id": "balance", "name": "Balance", "role": "중립 리스크 검토 (Neutral Risk)", "emoji": "⚖️", "color": "#e6e0d4", "team": "RISK MGMT", "subteam": null, "status": "pending", "statusText": "대기 중", "fullText": "아직 작성된 분석이 없습니다."}, {"id": "chief-strategist", "name": "The Boss", "role": "종합 리포트 작성 (포트폴리오 매니저)", "emoji": "🧑‍💼", "color": "#e8e0ff", "team": "PM", "subteam": null, "status": "done", "statusText": "리포트 작성 완료", "fullText": "매크로는 달러인덱스(-0.37%)·미국10년물(-0.21%) 동반 하락과 원화강세(-0.46%)로 표면적 리스크온 신호를 보였으나, 코스피(-0.6%)와 S&P500(+0.62%)이 반대 방향으로 움직이는 디커플링이 뚜렷했다. 크립토 데스크는 BTC(약세 우위)와 ETH(강세 우위)로 자산 내에서도 온도차가 컸고, 실제 매매시그널은 ETH 소액 매수(포지션3%)·BTC 관망으로 정리됐다. 국내주식은 SK하이닉스가 이틀연속 급락하며 하방 우위가 명확했고 삼성전자는 그 여파로 약세 쪽에 소폭 기울었다. 해외주식은 AAPL이 실적 급락+고밸류+배당락 겹침으로 약세 비대칭인 반면, NVDA는 8/26 실적을 앞두고 강약 근거가 팽팽해 이벤트리스크 관리 구간으로 판단됐다.\n\n- **지수 디커플링(공통 관찰)**: 코스피(-0.6%)와 S&P500(+0.62%)이 반대로 움직였고, 원화강세(-0.46%)·DXY하락(-0.37%)이라는 표면적 리스크온 신호에도 크립토(BTC RSI과매도+역배열)와 국내주식(외국인 반도체 순매도, 코스피 리스크오프) 양쪽에서 매크로 신호와 자산 자체 모멘텀이 어긋나는 괴리가 동시에 나타났다.\n- **반도체 밸류체인 공통 이슈**: SK하이닉스 급락(-4.88%, 2일연속)이 AI반도체 수요둔화 루머(미확인)와 겹치며 코스피 4대반도체 시총비중 60%육박이라는 구조적 리스크로 확대될 소지가 있고, 삼성전자 약세 쏠림도 이 여파를 받는 개별 데스크 고유 이슈로 구분된다.\n- 크립토: BTC RSI14 26.82 과매도+역배열 지속, ETF 연초누적 순유출(44.4억달러) 미해소, ETH는 DEX거래량 -36.1% 구조적 경고음.\n- 국내주식: SK하이닉스 MA20대비-17.58% 큰 이격+5일신저가, 밸류에이션(저PER)과 가격모멘텀(급락) 간 괴리, HBM/루빈 루머의 미확인 상태.\n- 해외주식: AAPL 서비스매출 부진+마진가이던스 우려+8/10 배당락, NVDA MA20대비+8.29% 단기과열+RSI65.61 과매수근접, 양사 공통으로 미국10년물 금리 소폭상승에 따른 고PER 밸류에이션 부담(Vault 지적)과 8/26 NVDA 실적 바이너리 이벤트 대기.\n\n- **크립토**: Node가 짚은 대로 BTC는 ETF 연속유입이 연초누적 순유출 갭을 얼마나 좁히는지, MA5의 MA20 상향돌파 여부가 관찰 포인트다. ETH는 강세 비대칭 구도의 핵심 축인 BitMine 등 기관 매집·스테이킹 흐름이 지속되는지, DEX거래량 급감이라는 구조적 경고음이 완화되는지 지켜볼 필요가 있다.\n- **국내주식**: Anchor가 지적한 대로 SK하이닉스의 HBM/루빈 생산량 조정 루머가 확인·해소되는 방향을 지켜볼 필요가 있고, 삼성전자는 견조한 펀더멘털과 수급·모멘텀 약세가 언제 어느 쪽으로 정리되는지가 관찰 포인트다.\n- **해외주식**: Compass가 제시한 AAPL의 실적급락+고밸류+배당락 겹침이 추가 하방으로 이어지는지, NVDA는 8/26 실적이 팽팽한 강약 균형을 어느 쪽으로 기울이는 스윙팩터가 될지 관찰이 필요하다."}], "summary": "매크로는 달러인덱스(-0.37%)·미국10년물(-0.21%) 동반 하락과 원화강세(-0.46%)로 표면적 리스크온 신호를 보였으나, 코스피(-0.6%)와 S&P500(+0.62%)이 반대 방향으로 움직이는 디커플링이 뚜렷했다. 크립토 데스크는 BTC(약세 우위)와 ETH(강세 우위)로 자산 내에서도 온도차가 컸고, 실제 매매시그널은 ETH 소액 매수(포지션3%)·BTC 관망으로 정리됐다. 국내주식은 SK하이닉스가 이틀연속 급락하며 하방 우위가 명확했고 삼성전자는 그 여파로 약세 쪽에 소폭 기울었다. 해외주식은 AAPL이 실적 급락+고밸류+배당락 겹침으로 약세 비대칭인 반면, NVDA는 8/26 실적을 앞두고 강약 근거가 팽팽해 이벤트리스크 관리 구간으로 판단됐다.", "watchlistGroups": [{"category": "크립토", "items": [{"key": "BTC", "label": "BTC", "notes": [{"name": "Node", "emoji": "🧑‍🔬", "text": "BTC: 약세쪽근거가 더견고(확정된하락추세 vs 검증중인초기반전조짐). 비대칭 약세쪽소폭우위. 지켜볼점: ETF연속유입으로 연초누적갭좁혀지는지, MA5의MA20상향돌파여부."}]}, {"key": "ETH", "label": "ETH", "notes": [{"name": "Node", "emoji": "🧑‍🔬", "text": "ETH: 강세쪽근거품질·개수우위(이벤트+매크로+온체인 세갈래fact교차: BitMine매집,Glamsterdam,ETF유입,TVL+7.8%,매도압력낮음). 단 DEX거래량급감은 구조적경고음."}]}]}, {"category": "국내주식", "items": [{"key": "삼성전자", "label": "삼성전자", "notes": [{"name": "Anchor", "emoji": "⚓", "text": "삼성전자: 약세쪽으로약간기움. 하방(가격모멘텀+수급+지수구조)이 상방(펀더멘털견조)보다 다각적."}]}, {"key": "SK하이닉스", "label": "SK하이닉스", "notes": [{"name": "Anchor", "emoji": "⚓", "text": "SK하이닉스: 하방이명확히우위. 실적은견고하나가격이크게괴리, 애널리스트3명모두하방방향에서공통지적. 단루머가 미확인이라 일방적추세단정은이름."}]}]}, {"category": "해외주식", "items": [{"key": "AAPL", "label": "Apple (AAPL)", "notes": [{"name": "Compass", "emoji": "🧭", "text": "AAPL: 약세쪽비대칭. 약세근거(실적급락+20일선아래+고밸류+배당락)는 3명모두겹치는fact, 강세는 저가매력정도의해석위주."}]}, {"key": "NVDA", "label": "NVIDIA (NVDA)", "notes": [{"name": "Compass", "emoji": "🧭", "text": "NVDA: 강세/약세 근거품질 팽팽, 판단근거부족에가까움. 무게중심이 8/26실적발표일로쏠림. 이벤트리스크관리구간으로판단."}]}]}]};
 
   const mapEl = document.getElementById('office-map');
   const summaryEl = document.getElementById('summary');
@@ -715,6 +737,136 @@
     group.querySelector('.watchlist-input').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') addWatchlistItem(type);
     });
+  });
+
+  const searchToggleBtn = document.getElementById('search-toggle-btn');
+  const searchPanel = document.getElementById('search-panel');
+  const searchInput = document.getElementById('search-input');
+  const searchSuggestions = document.getElementById('search-suggestions');
+  const searchStatus = document.getElementById('search-status');
+  const searchStaticNote = document.getElementById('search-static-note');
+  const recentSearchesChips = document.getElementById('recent-searches-chips');
+  const SEARCH_TYPE_LABELS = { crypto: '크립토', stocks_kr: '국내주식', stocks_us: '해외주식' };
+  let searchLoaded = false;
+  let searchDebounceTimer = null;
+  let quickAnalyzePollTimer = null;
+
+  searchToggleBtn.addEventListener('click', () => {
+    const willOpen = searchPanel.hidden;
+    searchPanel.hidden = !willOpen;
+    if (willOpen && !searchLoaded) loadRecentSearches();
+  });
+
+  function loadRecentSearches() {
+    fetch('/api/recent-searches', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then(data => {
+        searchLoaded = true;
+        searchStaticNote.hidden = true;
+        searchInput.disabled = false;
+        renderRecentSearches(data.items || []);
+      })
+      .catch(() => {
+        searchStaticNote.hidden = false;
+        searchInput.disabled = true;
+      });
+  }
+
+  function renderRecentSearches(items) {
+    recentSearchesChips.innerHTML = '';
+    items.forEach(item => {
+      const chip = document.createElement('span');
+      chip.className = 'watchlist-chip';
+      chip.style.cursor = 'pointer';
+      chip.textContent = `${SEARCH_TYPE_LABELS[item.type] || item.type} · ${item.name || item.symbol}`;
+      chip.addEventListener('click', () => {
+        openModal({ emoji: '🔍', name: `${item.symbol} 즉시분석`, fullText: item.result_text });
+      });
+      recentSearchesChips.appendChild(chip);
+    });
+  }
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchDebounceTimer);
+    const q = searchInput.value.trim();
+    if (!q) { searchSuggestions.hidden = true; return; }
+    searchDebounceTimer = setTimeout(() => {
+      fetch(`/api/symbols?q=${encodeURIComponent(q)}`, { cache: 'no-store' })
+        .then(r => (r.ok ? r.json() : { items: [] }))
+        .then(data => renderSuggestions(data.items || []))
+        .catch(() => { searchSuggestions.hidden = true; });
+    }, 250);
+  });
+
+  function renderSuggestions(items) {
+    searchSuggestions.innerHTML = '';
+    if (!items.length) { searchSuggestions.hidden = true; return; }
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'search-suggestion-item';
+      row.innerHTML =
+        `<span class="search-suggestion-badge">${SEARCH_TYPE_LABELS[item.type] || item.type}</span>` +
+        `<span>${item.symbol}</span><span style="color:var(--text-sub);">${item.name}</span>`;
+      row.addEventListener('click', () => startQuickAnalyze(item));
+      searchSuggestions.appendChild(row);
+    });
+    searchSuggestions.hidden = false;
+  }
+
+  function startQuickAnalyze(item) {
+    searchSuggestions.hidden = true;
+    searchInput.value = `${item.symbol} 분석 중... (수십초~수분 소요)`;
+    searchInput.disabled = true;
+    searchStatus.textContent = '';
+    fetch('/api/quick-analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: item.type, symbol: item.symbol, name: item.name }),
+    })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) {
+          searchInput.disabled = false;
+          searchInput.value = '';
+          searchStatus.textContent = data.error || '분석 시작 실패';
+          return;
+        }
+        pollQuickAnalyze();
+      })
+      .catch(() => {
+        searchInput.disabled = false;
+        searchInput.value = '';
+        searchStatus.textContent = '요청 실패';
+      });
+  }
+
+  function pollQuickAnalyze() {
+    clearTimeout(quickAnalyzePollTimer);
+    fetch('/api/quick-analyze/status', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'running') {
+          quickAnalyzePollTimer = setTimeout(pollQuickAnalyze, 5000);
+          return;
+        }
+        searchInput.disabled = false;
+        searchInput.value = '';
+        if (data.status === 'done') {
+          openModal({ emoji: '🔍', name: `${data.symbol} 즉시분석`, fullText: data.result_text });
+          loadRecentSearches();
+        } else if (data.status === 'error') {
+          searchStatus.textContent = `분석 실패: ${data.error}`;
+        }
+      })
+      .catch(() => {
+        quickAnalyzePollTimer = setTimeout(pollQuickAnalyze, 5000);
+      });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!searchSuggestions.contains(e.target) && e.target !== searchInput) {
+      searchSuggestions.hidden = true;
+    }
   });
 </script>
 </body>

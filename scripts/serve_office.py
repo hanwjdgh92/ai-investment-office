@@ -22,6 +22,7 @@ RUN_SCHEDULED_ANALYSIS_PS1 = ROOT / "scripts" / "run_scheduled_analysis.ps1"
 RUN_QUICK_ANALYZE_PS1 = ROOT / "scripts" / "run_quick_analyze.ps1"
 QUICK_ANALYZE_LOG = ROOT / "data" / "adhoc" / "_quick_analyze_output.log"
 QUICK_ANALYZE_BUDGET = {"crypto": "2", "stocks_kr": "1", "stocks_us": "1"}
+QUICK_ANALYZE_TIMEOUT_SEC = 600
 
 _analysis_process: subprocess.Popen | None = None
 _quick_analyze_process: subprocess.Popen | None = None
@@ -275,8 +276,12 @@ class OfficeHandler(BaseHTTPRequestHandler):
 
         type_ = body.get("type")
         symbol = str(body.get("symbol", "")).strip().upper()
+        name = str(body.get("name", "")).strip() or symbol
         if type_ not in ("crypto", "stocks_kr", "stocks_us") or not symbol:
             self._send_json(400, {"error": "type과 symbol이 필요합니다."})
+            return
+        if not symbol_universe.exists(type_, symbol):
+            self._send_json(400, {"error": "자동완성 목록에 없는 종목입니다."})
             return
         if _quick_analyze_process is not None and _quick_analyze_process.poll() is None:
             self._send_json(409, {"error": "이미 분석이 진행 중입니다."})
@@ -296,7 +301,7 @@ class OfficeHandler(BaseHTTPRequestHandler):
             cwd=ROOT,
             creationflags=subprocess.CREATE_NO_WINDOW,
         )
-        _quick_analyze_meta = {"type": type_, "symbol": symbol}
+        _quick_analyze_meta = {"type": type_, "symbol": symbol, "name": name, "started_at": time.time()}
         self._send_json(202, {"status": "started"})
 
     def _quick_analyze_status(self) -> None:
@@ -305,25 +310,32 @@ class OfficeHandler(BaseHTTPRequestHandler):
             self._send_json(200, {"status": "idle"})
             return
 
+        meta_public = {k: v for k, v in _quick_analyze_meta.items() if k != "started_at"}
+
         returncode = _quick_analyze_process.poll()
         if returncode is None:
-            self._send_json(200, {"status": "running", **_quick_analyze_meta})
+            if time.time() - _quick_analyze_meta["started_at"] >= QUICK_ANALYZE_TIMEOUT_SEC:
+                _quick_analyze_process.kill()
+                _quick_analyze_process = None
+                _quick_analyze_meta = None
+                self._send_json(200, {"status": "error", **meta_public, "error": "분석 시간 초과(10분)로 중단됨"})
+                return
+            self._send_json(200, {"status": "running", **meta_public})
             return
 
-        meta = _quick_analyze_meta
         _quick_analyze_process = None
         _quick_analyze_meta = None
         text = (
-            QUICK_ANALYZE_LOG.read_text(encoding="utf-8", errors="replace").strip()
+            QUICK_ANALYZE_LOG.read_text(encoding="utf-8-sig", errors="replace").strip()
             if QUICK_ANALYZE_LOG.exists() else ""
         )
 
         if returncode != 0 or not text:
             error = text[-2000:] if text else f"프로세스 종료 코드 {returncode}"
-            self._send_json(200, {"status": "error", **meta, "error": error})
+            self._send_json(200, {"status": "error", **meta_public, "error": error})
             return
 
-        entry = {**meta, "timestamp": datetime.now(timezone.utc).isoformat(), "result_text": text}
+        entry = {**meta_public, "timestamp": datetime.now(timezone.utc).isoformat(), "result_text": text}
         recent_searches_store.add(entry)
         self._send_json(200, {"status": "done", **entry})
 
