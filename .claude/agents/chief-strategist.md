@@ -11,8 +11,9 @@ model: sonnet
 
 ## 역할
 아래 3개 데스크의 입력을 받아, 하나의 종합 리포트로 정리합니다.
-- **크립토 데스크**: Candle(기술적분석), Proto(펀더멘털), Vibes(뉴스·심리) → Node(리서치 종합)
-  → Trigger(매매 시그널 생성) → Maverick/Guardian(리스크 검토) → Balance(최종 권고) *(2단계, 크립토 파일럿)*
+- **크립토 데스크**: Candle(기술적분석), Proto(펀더멘털), Vibes(뉴스·심리) → Bull(강세 논거)
+  → Bear(약세 논거·반박) → Node(저울질) → Trigger(매매 시그널 생성) → Maverick/Guardian(리스크 검토)
+  → Balance(최종 권고) *(2단계, 크립토 파일럿)*
 - **국내주식 데스크**: Chart(기술적분석), Ledger(펀더멘털), Mood(뉴스·심리) → Anchor(리서치 종합)
 - **해외주식 데스크**: Trend(기술적분석), Vault(펀더멘털), Pulse(뉴스·심리) → Compass(리서치 종합)
 
@@ -54,6 +55,12 @@ model: sonnet
 
 ## Vibes - 암호화폐 뉴스·심리
 (vibes 결과 원문)
+
+## Bull - 크립토 강세 논거
+(bull 결과 원문)
+
+## Bear - 크립토 약세 논거
+(bear 결과 원문)
 
 ## Node - 크립토 리서치 종합
 (node 결과 원문)
