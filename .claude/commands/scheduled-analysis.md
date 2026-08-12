@@ -38,8 +38,8 @@ description: (자동화용) 데이터 수집 + 애널리스트팀·리서치팀�
    `trigger`/`maverick`/`guardian` 결과를 모두 `balance`에게 전달해 최종 권고로 저울질합니다.
    국내주식/해외주식 데스크는 이 단계가 없습니다(크립토만 파일럿).
 
-5. **PM**: 2번의 9개 분석 결과와 3번의 리서치 종합 결과(node/anchor/compass 3개), 4번의 크립토 매매
-   시그널 결과(trigger/maverick/guardian/balance 4개)를 `chief-strategist` 서브에이전트에게 전달해
+5. **PM**: 2번의 9개 분석 결과와 3번의 리서치 종합 결과(bull/bear/node/anchor/compass 5개), 4번의 크립토
+   매매 시그널 결과(trigger/maverick/guardian/balance 4개)를 `chief-strategist` 서브에이전트에게 전달해
    종합 리포트를 `reports/YYYY-MM-DD.md`로 작성(또는 갱신)하게 합니다.
 
 6. `python scripts\generate_office.py`를 실행해 `office\index.html` 스냅샷도 최신 상태로 갱신합니다.

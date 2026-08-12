@@ -16,10 +16,11 @@ type=crypto, symbol=BTC). type은 반드시 crypto/stocks_kr/stocks_us 중 하�
    (`data/crypto_YYYY-MM-DD.json` 등) 대신 `data/adhoc/<type>_<symbol>.json` 파일 하나만 읽고, 그 안의
    종목 하나만 분석하라"고 명시적으로 지시하세요.
 
-   - **crypto**: `candle`/`proto`/`vibes`를 병렬로 호출 → 세 결과를 `node`에게 전달해 리서치 종합 →
-     `node` 결과를 `trigger`에게 전달해 매매 시그널 생성 → `trigger` 결과를 `maverick`/`guardian`에게
-     각각 병렬로 전달해 리스크 검토 → `trigger`/`maverick`/`guardian` 결과를 모두 `balance`에게 전달해
-     최종 권고로 종합.
+   - **crypto**: `candle`/`proto`/`vibes`를 병렬로 호출 → 세 결과를 `bull`에게 전달해 강세 논거 작성 →
+     `bull`의 결과를 `bear`에게 전달해 약세 논거+반박 작성 → `bull`/`bear` 결과를 모두 `node`에게 전달해
+     저울질(리서치 종합) → `node` 결과를 `trigger`에게 전달해 매매 시그널 생성 → `trigger` 결과를
+     `maverick`/`guardian`에게 각각 병렬로 전달해 리스크 검토 → `trigger`/`maverick`/`guardian` 결과를
+     모두 `balance`에게 전달해 최종 권고로 종합.
    - **stocks_kr**: `chart`/`ledger`/`mood`를 병렬로 호출 → 세 결과를 `anchor`에게 전달해 리서치 종합.
    - **stocks_us**: `trend`/`vault`/`pulse`를 병렬로 호출 → 세 결과를 `compass`에게 전달해 리서치 종합.
 
@@ -42,7 +43,14 @@ type=crypto, symbol=BTC). type은 반드시 crypto/stocks_kr/stocks_us 중 하�
    ...
    ```
 
-   crypto인 경우에만 그 아래 이어서:
+   crypto인 경우 3번째 항목(`node`)에 앞서 `bull`/`bear` 섹션을 아래처럼 추가로 끼워 넣고:
+   ```
+   ## Bull - 강세 논거
+   ...
+   ## Bear - 약세 논거·반박
+   ...
+   ```
+   그 아래 이어서:
    ```
    ## Trigger - 매매 시그널
    ...

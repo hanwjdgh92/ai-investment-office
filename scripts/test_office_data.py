@@ -44,6 +44,21 @@ def test_employees_have_bull_bear_excluded_from_watchlist():
     assert "bull" in ids and "bear" in ids
     assert WATCHLIST_EXCLUDE_IDS == {"bull", "bear"}
 
+    # office_data.get_office_data()가 워치리스트 카드에 붙일 크립토 RESEARCH 담당을 고르는
+    # 필터링과 동일한 조건을 재현해, bull/bear가 실제로 빠지는지 확인한다(상수값만 비교하는 걸로는
+    # 부족 - 필터 조건 자체가 깨져도 위 assert들은 통과할 수 있음).
+    team_employees = [
+        e
+        for e in EMPLOYEES
+        if e["team"] == "크립토"
+        and e.get("subteam") == "RESEARCH"
+        and e["id"] not in WATCHLIST_EXCLUDE_IDS
+    ]
+    team_employee_ids = [e["id"] for e in team_employees]
+    assert "bull" not in team_employee_ids
+    assert "bear" not in team_employee_ids
+    assert "node" in team_employee_ids
+
 
 if __name__ == "__main__":
     test_parse_json_block_valid()
