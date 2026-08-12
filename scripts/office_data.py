@@ -317,6 +317,30 @@ def match_symbol_lines(text: str, match_key: str) -> list[str]:
     return lines
 
 
+JSON_SIGNAL_BLOCK_RE = re.compile(r"```json\s*(\{.*?\})\s*```", re.DOTALL)
+
+
+def parse_json_block(text: str) -> dict | None:
+    match = JSON_SIGNAL_BLOCK_RE.search(text)
+    if not match:
+        return None
+    try:
+        data = json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return None
+    signals = data.get("signals")
+    if not isinstance(signals, list):
+        return None
+    result = {}
+    for entry in signals:
+        if not isinstance(entry, dict):
+            continue
+        symbol = entry.get("symbol")
+        if symbol:
+            result[str(symbol).upper()] = entry
+    return result
+
+
 def build_office_data() -> dict:
     report_file = latest_file("*.md", REPORTS_DIR)
     sections = {}
@@ -380,6 +404,8 @@ def build_office_data() -> dict:
             }
         )
 
+    trigger_signals = parse_json_block(emp_full_text.get("trigger", "")) or {}
+
     watchlist = watchlist_store.load()
     watchlist_groups = []
     for team in ("크립토", "국내주식", "해외주식"):
@@ -406,7 +432,12 @@ def build_office_data() -> dict:
                 for line in match_symbol_lines(emp_full_text.get(emp["id"], ""), match_key):
                     notes.append({"name": emp["name"], "emoji": emp["emoji"], "text": line})
 
-            cards.append({"key": match_key, "label": label, "notes": notes})
+            card = {"key": match_key, "label": label, "notes": notes}
+            if wl_key == "crypto":
+                signal = trigger_signals.get(match_key.upper())
+                if signal:
+                    card["signal"] = signal
+            cards.append(card)
 
         if cards:
             watchlist_groups.append({"category": team, "items": cards})
