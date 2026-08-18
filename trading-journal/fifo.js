@@ -1,3 +1,5 @@
+const EPS = 1e-9;
+
 export function computeStats(trades) {
   const bySymbol = new Map();
   for (const t of trades) {
@@ -20,7 +22,7 @@ export function computeStats(trades) {
         buyQueue.push({ price: t.price, remainingQty: t.quantity, tradeId: t.id });
       } else if (t.side === "sell") {
         let sellRemaining = t.quantity;
-        while (sellRemaining > 0 && buyQueue.length > 0) {
+        while (sellRemaining > EPS && buyQueue.length > 0) {
           const head = buyQueue[0];
           const matchedQty = Math.min(sellRemaining, head.remainingQty);
           matches.push({
@@ -34,14 +36,14 @@ export function computeStats(trades) {
           });
           head.remainingQty -= matchedQty;
           sellRemaining -= matchedQty;
-          if (head.remainingQty <= 0) buyQueue.shift();
+          if (head.remainingQty <= EPS) buyQueue.shift();
         }
         // sellRemaining > 0으로 남으면 공매도(보유 초과 매도) — 매칭 없이 무시
       }
     }
 
     const remainingQty = buyQueue.reduce((sum, b) => sum + b.remainingQty, 0);
-    if (remainingQty > 0) holdings[symbol] = remainingQty;
+    if (remainingQty > EPS) holdings[symbol] = remainingQty;
   }
 
   const totalPnl = matches.reduce((sum, m) => sum + m.pnl, 0);

@@ -61,6 +61,28 @@ test("승률은 익절 매칭 수 / 전체 매칭 수", () => {
   assert.equal(stats.winRate, 0.5);
 });
 
+test("부동소수점 잔차: 완전 청산 시 holdings에 잔여물이 남지 않음", () => {
+  const trades = [
+    { id: 1, symbol: "BTC", side: "buy", price: 100, quantity: 0.9, date: "2026-08-01", createdAt: 1 },
+    { id: 2, symbol: "BTC", side: "sell", price: 110, quantity: 0.3, date: "2026-08-02", createdAt: 2 },
+    { id: 3, symbol: "BTC", side: "sell", price: 120, quantity: 0.6, date: "2026-08-03", createdAt: 3 },
+  ];
+  const stats = computeStats(trades);
+  assert.deepEqual(stats.holdings, {});
+});
+
+test("부동소수점 잔차: 유령 근사-제로 매칭으로 승률이 오염되지 않음", () => {
+  const trades = [
+    { id: 1, symbol: "BTC", side: "buy", price: 100, quantity: 0.3, date: "2026-08-01", createdAt: 1 },
+    { id: 2, symbol: "BTC", side: "buy", price: 100, quantity: 0.6, date: "2026-08-02", createdAt: 2 },
+    { id: 3, symbol: "BTC", side: "buy", price: 100, quantity: 1.0, date: "2026-08-03", createdAt: 3 },
+    { id: 4, symbol: "BTC", side: "sell", price: 150, quantity: 0.9, date: "2026-08-04", createdAt: 4 },
+  ];
+  const stats = computeStats(trades);
+  assert.equal(stats.matchCount, 2);
+  assert.equal(stats.winRate, 1);
+});
+
 test("validateTradeInput: 필수 필드 누락시 에러", () => {
   const result = validateTradeInput({ symbol: "", side: "buy", price: 0, quantity: 0, date: "" });
   assert.equal(result.valid, false);

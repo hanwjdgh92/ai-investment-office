@@ -4,6 +4,10 @@ import { addTrade, getAllTrades, deleteTrade, importTrades } from "./db.js";
 let currentFilter = "";
 let selectedTradeId = null;
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -25,7 +29,7 @@ async function renderAll() {
   const symbols = [...new Set(allTrades.map((t) => t.symbol))].sort();
   const prevValue = filterSelect.value;
   filterSelect.innerHTML = '<option value="">전체</option>' +
-    symbols.map((s) => `<option value="${s}">${s}</option>`).join("");
+    symbols.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
   filterSelect.value = symbols.includes(prevValue) ? prevValue : "";
   currentFilter = filterSelect.value;
 
@@ -49,12 +53,12 @@ async function renderAll() {
     tr.dataset.id = t.id;
     const memoPreview = (t.memo || "").slice(0, 20);
     tr.innerHTML = `
-      <td>${t.date}</td>
-      <td>${t.symbol}</td>
+      <td>${escapeHtml(t.date)}</td>
+      <td>${escapeHtml(t.symbol)}</td>
       <td>${t.side === "buy" ? "매수" : "매도"}</td>
-      <td>${t.price}</td>
-      <td>${t.quantity}</td>
-      <td>${memoPreview}</td>
+      <td>${escapeHtml(t.price)}</td>
+      <td>${escapeHtml(t.quantity)}</td>
+      <td>${escapeHtml(memoPreview)}</td>
       <td><button class="delete-btn" data-id="${t.id}">삭제</button></td>
     `;
     tbody.appendChild(tr);
@@ -144,6 +148,7 @@ async function handleImport(e) {
   const restored = await Promise.all(
     records.map(async (r) => ({
       ...r,
+      symbol: (r.symbol || "").trim().toUpperCase(),
       chartImage: r.chartImage ? await dataUrlToBlob(r.chartImage) : undefined,
     }))
   );
@@ -160,6 +165,6 @@ document.getElementById("detail-close").addEventListener("click", () => {
 });
 document.getElementById("export-btn").addEventListener("click", handleExport);
 document.getElementById("import-file").addEventListener("change", handleImport);
-document.getElementById("date").valueAsDate = new Date();
+document.getElementById("date").value = new Date().toLocaleDateString("sv-SE");
 
 renderAll();
