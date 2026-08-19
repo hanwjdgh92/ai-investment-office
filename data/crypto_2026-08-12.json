@@ -1,0 +1,40 @@
+[
+  {
+    "symbol": "BTC",
+    "upbit": {
+      "price": 90096000.0,
+      "change_rate_24h": 0.51,
+      "volume_24h": 741.15617521
+    },
+    "indicators": {
+      "ma5": 90507600.0,
+      "ma20": 91624750.0,
+      "ma60": 93634350.0,
+      "rsi14": 39.94
+    },
+    "bybit": {
+      "price": 63996.7,
+      "change_rate_24h": -0.52,
+      "volume_24h": 7229.339092
+    }
+  },
+  {
+    "symbol": "ETH",
+    "upbit": {
+      "price": 2683000.0,
+      "change_rate_24h": 1.21,
+      "volume_24h": 11823.82090657
+    },
+    "indicators": {
+      "ma5": 2671400.0,
+      "ma20": 2705150.0,
+      "ma60": 2651133.3333,
+      "rsi14": 42.44
+    },
+    "bybit": {
+      "price": 1906.46,
+      "change_rate_24h": 0.92,
+      "volume_24h": 55827.01339
+    }
+  }
+]

@@ -1,0 +1,8 @@
+﻿claude.exe : Budget limit reached ($3.00 of $3); stopping background agents.
+위치 C:\Users\user\ai-investment-office\scripts\run_scheduled_analysis.ps1:41 문자:5
++     & $ClaudeExe -p "/scheduled-analysis" --permission-mode acceptEdi ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Budget limit re...kground agents.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Error: Exceeded USD budget (3)
